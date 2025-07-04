@@ -12,11 +12,14 @@ function PublicHome() {
   useEffect(() => {
     API.get('/posts')
       .then((res) => {
-        setPosts(res.data);
+        // Ensure we always have an array
+        const postsData = Array.isArray(res.data) ? res.data : [];
+        setPosts(postsData);
         setLoading(false);
       })
       .catch((err) => {
         console.error('Fetch failed:', err);
+        setPosts([]); // Set to empty array on error
         setLoading(false);
       });
   }, []);
@@ -208,7 +211,7 @@ function PublicHome() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-10">
-              {posts.slice(0, 6).map((post, index) => (
+              {Array.isArray(posts) && posts.slice(0, 6).map((post, index) => (
                 <div
                   key={post._id}
                   className="opacity-0 animate-fadeInUp"
