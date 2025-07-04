@@ -9,7 +9,7 @@ const app = express();
 app.use(cors({
   origin: [
     'http://localhost:3000', // for local development
-    'https://blogify-frontend.vercel.app', // replace with your actual Vercel URL
+    'https://blogify-teal.vercel.app', // your actual Vercel URL
     /\.vercel\.app$/ // allow any vercel subdomain
   ],
   credentials: true
