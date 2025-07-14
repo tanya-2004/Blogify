@@ -5,12 +5,7 @@ import { setToken } from '../../utils/auth';
 import Card from '../../components/ui/Card';
 import Typography from '../../components/ui/Typography';
 
-/**
- * Login Page Component
- * 
- * Premium authentication interface with glassmorphic design
- * Features form validation, loading states, and error handling
- */
+
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
