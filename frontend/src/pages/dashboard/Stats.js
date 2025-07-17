@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import API from '../../utils/axios';
-import NewPostModal from '../../components/modals/NewPostModal';
-import Card from '../../components/ui/Card';
-import Typography from '../../components/ui/Typography';
+import { NewPostModal, Card, Typography } from '../../components';
 
 export default function Stats() {
   const [showModal, setShowModal] = useState(false);

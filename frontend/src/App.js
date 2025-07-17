@@ -10,8 +10,7 @@ import Stats from "./pages/dashboard/Stats";
 import Comments from "./pages/dashboard/Comments";
 import Theme from "./pages/dashboard/Theme";
 import Settings from "./pages/dashboard/Settings";
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import Layout from './components/layout/Layout';
+import { ProtectedRoute, Layout } from './components';
 import './App.css';
 
 function App() {

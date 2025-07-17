@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { removeToken, isAuthenticated } from '../../utils/auth';
+import { Button, Typography } from '../ui';
 
 export default function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -48,14 +49,6 @@ export default function Header() {
             
             {isLoggedIn && (
               <>
-                <Link 
-                  to="/create" 
-                  className="relative px-6 py-3 text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium group"
-                >
-                  <span className="relative z-10">Create</span>
-                  <div className="absolute inset-0 bg-blue-50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </Link>
-                
                 <Link 
                   to="/dashboard" 
                   className="relative px-6 py-3 text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium group"

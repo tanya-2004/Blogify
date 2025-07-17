@@ -1,8 +1,5 @@
 import { useState } from 'react';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Typography from '../../components/ui/Typography';
-import NewPostModal from '../../components/modals/NewPostModal';
+import { Card, Button, Typography, NewPostModal } from '../../components';
 
 export default function Theme() {
   const [showModal, setShowModal] = useState(false);
@@ -45,7 +42,7 @@ export default function Theme() {
         {/* Theme Selection */}
         <Card className="mb-6">
           <Typography variant="h2" className="mb-4">
-            🎨 Choose Theme
+            Choose Theme
           </Typography>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {themes.map((theme) => (
@@ -72,7 +69,7 @@ export default function Theme() {
         {/* Color Customization */}
         <Card className="mb-6">
           <Typography variant="h2" className="mb-4">
-            🌈 Primary Color
+            Primary Color
           </Typography>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
             {colorOptions.map((color) => (

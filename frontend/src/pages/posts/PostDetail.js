@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Typography from '../../components/ui/Typography';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { Card, Button, Typography, LoadingSpinner } from '../../components';
 import API from '../../utils/axios';
 import { isAuthenticated } from '../../utils/auth';
 

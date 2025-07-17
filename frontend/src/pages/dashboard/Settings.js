@@ -1,9 +1,5 @@
 import { useState } from 'react';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Typography from '../../components/ui/Typography';
-import Input from '../../components/ui/Input';
-import NewPostModal from '../../components/modals/NewPostModal';
+import { Card, Button, Typography, Input, NewPostModal } from '../../components';
 
 export default function Settings() {
   const [showModal, setShowModal] = useState(false);
@@ -301,7 +297,7 @@ export default function Settings() {
 
             {activeTab === 'appearance' && (
               <div>
-                <SettingGroup title="🎨 Appearance">
+                <SettingGroup title="Appearance">
                   <SelectSetting
                     label="Theme"
                     value={settings.theme}
@@ -341,7 +337,7 @@ export default function Settings() {
 
             {activeTab === 'blog' && (
               <div>
-                <SettingGroup title="📝 Blog Configuration">
+                <SettingGroup title="Blog Configuration">
                   <InputSetting
                     label="Blog Title"
                     value={settings.blogTitle}

@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import API from '../../utils/axios';
 import { setToken } from '../../utils/auth';
-import Card from '../../components/ui/Card';
-import Typography from '../../components/ui/Typography';
+import { Card, Typography } from '../../components';
 
 /**
  * Signup Page Component

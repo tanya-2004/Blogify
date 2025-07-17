@@ -1,16 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import API from '../../utils/axios';
-import Card from '../ui/Card';
 import Button from '../ui/Button';
-import Input from '../ui/Input';
 import Typography from '../ui/Typography';
+import { borderRadius } from '../../styles/theme';
 
-/**
- * NewPostModal Component
- * 
- * Premium modal for creating new blog posts
- * Features glassmorphic design, form validation, and loading states
- */
 export default function NewPostModal({ open, onClose, onPostCreated }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -18,6 +11,15 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
   const [imageUrl, setImageUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [focusedField, setFocusedField] = useState(null);
+  const titleInputRef = useRef(null);
+
+  // Auto-focus title input when modal opens
+  useEffect(() => {
+    if (open && titleInputRef.current) {
+      setTimeout(() => titleInputRef.current.focus(), 100);
+    }
+  }, [open]);
 
   if (!open) return null;
 
@@ -32,7 +34,10 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
         tags: tags.split(',').map(t => t.trim()).filter(Boolean),
         imageUrl,
       });
-      setTitle(''); setContent(''); setTags(''); setImageUrl('');
+      setTitle('');
+      setContent('');
+      setTags('');
+      setImageUrl('');
       onPostCreated();
       onClose();
     } catch (err) {
@@ -48,155 +53,442 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
     }
   };
 
+  // Dynamic styling variables for consistency
+  const theme = {
+    colors: {
+      primary: '#3B82F6',
+      primaryLight: '#EFF6FF',
+      secondary: '#6B7280',
+      border: '#D1D5DB',
+      borderLight: '#E5E7EB',
+      background: '#F9FAFB',
+      white: '#FFFFFF',
+      error: '#DC2626',
+      success: '#10B981',
+      text: '#1F2937',
+      textLight: '#6B7280'
+    },
+    spacing: {
+      xs: '4px',
+      sm: '8px',
+      md: '12px',
+      lg: '16px',
+      xl: '24px'
+    },
+    borderRadius: {
+      sm: '6px',
+      md: '8px',
+      lg: '12px'
+    },
+    shadows: {
+      modal: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+      light: '0 1px 3px rgba(0, 0, 0, 0.1)'
+    }
+  };
+
+  const iconStyle = { 
+    width: '16px', 
+    height: '16px', 
+    minWidth: '16px', 
+    minHeight: '16px', 
+    flexShrink: 0 
+  };
+
+  // Dynamic input style based on focus state
+  const getInputStyle = (fieldName) => ({
+    width: '100%',
+    padding: '12px 16px 12px 44px',
+    border: `1px solid ${focusedField === fieldName ? theme.colors.primary : theme.colors.border}`,
+    borderRadius: theme.borderRadius.md,
+    fontSize: '14px',
+    outline: 'none',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+    boxShadow: focusedField === fieldName ? `0 0 0 3px ${theme.colors.primary}20` : 'none'
+  });
+
+  const getTextareaStyle = (fieldName) => ({
+    ...getInputStyle(fieldName),
+    resize: 'vertical',
+    minHeight: '120px',
+    fontFamily: 'inherit',
+    lineHeight: '1.5'
+  });
+
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      className="blog-modal-overlay new-post-modal-backdrop"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="modal-title"
+      aria-labelledby="new-post-modal-title"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(8px)',
+        zIndex: 1400,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: theme.spacing.lg
+      }}
     >
-      <Card 
-        variant="glass" 
-        className="w-full max-w-2xl mx-auto bg-white/98 backdrop-blur-xl border border-white/30 shadow-2xl animate-scaleIn max-h-[90vh] flex flex-col"
+      <div 
+        className="blog-modal-container new-post-modal-container" 
+        style={{
+          backgroundColor: theme.colors.white,
+          borderRadius: theme.borderRadius.lg,
+          padding: '0',
+          maxWidth: '600px',
+          width: '100%',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          boxShadow: theme.shadows.modal,
+          transform: 'scale(1)',
+          transition: 'transform 0.2s ease'
+        }}
       >
-        <Card.Header className="flex items-center justify-between flex-shrink-0">
-          <Typography 
-            id="modal-title"
-            variant="title" 
-            weight="bold" 
-            className="force-black-text"
-          >
-            ✨ Create New Post
-          </Typography>
+        
+        <header className="blog-modal-header new-post-modal-header" style={{
+          padding: `${theme.spacing.xl} ${theme.spacing.xl} 0 ${theme.spacing.xl}`,
+          position: 'relative',
+          borderBottom: `1px solid ${theme.colors.borderLight}`
+        }}>
+          <div className="blog-modal-title-section new-post-modal-title-section" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: theme.spacing.md,
+            marginBottom: theme.spacing.lg
+          }}>
+            <div className="blog-modal-icon-wrapper new-post-modal-icon" style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: theme.borderRadius.sm,
+              backgroundColor: theme.colors.primaryLight,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: theme.colors.primary
+            }}>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <Typography 
+              id="new-post-modal-title"
+              variant="title" 
+              weight="bold" 
+              className="blog-modal-title new-post-modal-title dashboard-heading-text"
+              style={{ color: theme.colors.text }}
+            >
+              Create New Story
+            </Typography>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-gray-100 transition-colors duration-200 text-gray-500 hover:text-gray-700"
-            aria-label="Close modal"
+            className="blog-modal-close-button new-post-modal-close"
+            aria-label="Close create post modal"
+            style={{
+              position: 'absolute',
+              top: theme.spacing.lg,
+              right: theme.spacing.lg,
+              background: 'none',
+              border: 'none',
+              padding: theme.spacing.sm,
+              cursor: 'pointer',
+              borderRadius: theme.borderRadius.sm,
+              color: theme.colors.secondary,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'color 0.2s ease, background-color 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = theme.colors.background;
+              e.target.style.color = theme.colors.text;
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+              e.target.style.color = theme.colors.secondary;
+            }}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-        </Card.Header>
+        </header>
 
-        <Card.Body className="flex-1 overflow-y-auto">
+        <main className="blog-modal-body new-post-modal-body" style={{
+          padding: theme.spacing.xl,
+          maxHeight: '60vh',
+          overflowY: 'auto'
+        }}>
           {error && (
-            <div 
-              className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700"
-              role="alert"
-              aria-live="polite"
-            >
-              <div className="flex items-center space-x-2">
-                <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="blog-form-error-message new-post-error-display" role="alert" aria-live="polite">
+              <div className="blog-form-error-content" style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: theme.spacing.sm, 
+                color: theme.colors.error, 
+                marginBottom: theme.spacing.md,
+                padding: theme.spacing.md,
+                backgroundColor: `${theme.colors.error}10`,
+                borderRadius: theme.borderRadius.md,
+                border: `1px solid ${theme.colors.error}30`
+              }}>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>{error}</span>
+                <span style={{ fontSize: '14px', fontWeight: '500' }}>{error}</span>
               </div>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <Typography variant="body1" className="force-black-text font-medium mb-2">
+          <form onSubmit={handleSubmit} className="blog-post-creation-form new-post-form" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0'
+          }}>
+            
+            {/* Post Title */}
+            <div style={{ marginBottom: '20px' }}>
+              <Typography 
+                variant="body1" 
+                style={{ 
+                  marginBottom: theme.spacing.sm, 
+                  display: 'block', 
+                  fontWeight: '500',
+                  color: theme.colors.text
+                }}
+              >
                 Post Title *
               </Typography>
-              <Input
-                placeholder="Enter an engaging title..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                leftIcon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <div style={{ 
+                  position: 'absolute', 
+                  left: theme.spacing.md, 
+                  color: focusedField === 'title' ? theme.colors.primary : theme.colors.secondary,
+                  transition: 'color 0.2s ease'
+                }}>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
-                }
-              />
-            </div>
-
-            <div>
-              <Typography variant="body1" className="force-black-text font-medium mb-2">
-                Featured Image URL (Optional)
-              </Typography>
-              <Input
-                type="url"
-                placeholder="https://example.com/image.jpg"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                leftIcon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                }
-              />
-            </div>
-
-            <div>
-              <Typography variant="body1" className="force-black-text font-medium mb-2">
-                Content *
-              </Typography>
-              <div className="relative">
-                <textarea
-                  placeholder="Write your story here..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                </div>
+                <input
+                  ref={titleInputRef}
+                  type="text"
+                  placeholder="Enter an engaging title..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onFocus={() => setFocusedField('title')}
+                  onBlur={() => setFocusedField(null)}
                   required
-                  rows={8}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 resize-none"
+                  style={getInputStyle('title')}
                 />
               </div>
             </div>
 
-            <div>
-              <Typography variant="body1" className="force-black-text font-medium mb-2">
+            {/* Image URL */}
+            <div style={{ marginBottom: '20px' }}>
+              <Typography 
+                variant="body1" 
+                style={{ 
+                  marginBottom: theme.spacing.sm, 
+                  display: 'block', 
+                  fontWeight: '500',
+                  color: theme.colors.text
+                }}
+              >
+                Featured Image URL (Optional)
+              </Typography>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <div style={{ 
+                  position: 'absolute', 
+                  left: theme.spacing.md, 
+                  color: focusedField === 'imageUrl' ? theme.colors.primary : theme.colors.secondary,
+                  transition: 'color 0.2s ease'
+                }}>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <input
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  onFocus={() => setFocusedField('imageUrl')}
+                  onBlur={() => setFocusedField(null)}
+                  style={getInputStyle('imageUrl')}
+                />
+              </div>
+            </div>
+
+            {/* Content */}
+            <div style={{ marginBottom: '20px' }}>
+              <Typography 
+                variant="body1" 
+                style={{ 
+                  marginBottom: theme.spacing.sm, 
+                  display: 'block', 
+                  fontWeight: '500',
+                  color: theme.colors.text
+                }}
+              >
+                Content *
+              </Typography>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start' }}>
+                <div style={{ 
+                  position: 'absolute', 
+                  top: theme.spacing.md, 
+                  left: theme.spacing.md, 
+                  color: focusedField === 'content' ? theme.colors.primary : theme.colors.secondary,
+                  transition: 'color 0.2s ease'
+                }}>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+                <textarea
+                  placeholder="Write your story here..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  onFocus={() => setFocusedField('content')}
+                  onBlur={() => setFocusedField(null)}
+                  required
+                  rows={8}
+                  style={getTextareaStyle('content')}
+                />
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div style={{ marginBottom: '20px' }}>
+              <Typography 
+                variant="body1" 
+                style={{ 
+                  marginBottom: theme.spacing.sm, 
+                  display: 'block', 
+                  fontWeight: '500',
+                  color: theme.colors.text
+                }}
+              >
                 Tags (Optional)
               </Typography>
-              <Input
-                placeholder="technology, design, programming (comma separated)"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                leftIcon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <div style={{ 
+                  position: 'absolute', 
+                  left: theme.spacing.md, 
+                  color: focusedField === 'tags' ? theme.colors.primary : theme.colors.secondary,
+                  transition: 'color 0.2s ease'
+                }}>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
-                }
-              />
-              <Typography variant="caption" className="force-black-text mt-1 block">
+                </div>
+                <input
+                  type="text"
+                  placeholder="technology, design, programming"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  onFocus={() => setFocusedField('tags')}
+                  onBlur={() => setFocusedField(null)}
+                  style={getInputStyle('tags')}
+                />
+              </div>
+              <Typography 
+                variant="caption" 
+                style={{ 
+                  marginTop: theme.spacing.xs, 
+                  fontSize: '12px', 
+                  color: theme.colors.textLight,
+                  display: 'block'
+                }}
+              >
                 Separate tags with commas
               </Typography>
             </div>
           </form>
-        </Card.Body>
+        </main>
 
-        <div className="flex justify-end space-x-4 p-6 border-t border-gray-200/50 flex-shrink-0 bg-white/98 backdrop-blur-sm">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-            disabled={loading}
-            className="min-w-[100px]"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            loading={loading}
-            disabled={loading}
-            onClick={handleSubmit}
-            className="min-w-[140px]"
-            rightIcon={
-              !loading && (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-              )
-            }
-          >
-            {loading ? 'Publishing...' : 'Publish Post'}
-          </Button>
-        </div>
-      </Card>
+        <footer style={{
+          padding: `${theme.spacing.md} ${theme.spacing.xl} ${theme.spacing.lg} ${theme.spacing.xl}`,
+          borderTop: `1px solid ${theme.colors.borderLight}`,
+          backgroundColor: theme.colors.background
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: theme.spacing.md
+          }}>
+            <Button 
+              type="button" 
+              variant="secondary" 
+              onClick={onClose} 
+              disabled={loading}
+              style={{
+                minWidth: '100px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              loading={loading}
+              disabled={loading}
+              onClick={handleSubmit}
+              className="blog-button-primary-action new-post-submit-btn"
+              style={{
+                minWidth: '140px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: theme.spacing.sm,
+                fontSize: '14px',
+                borderRadius: theme.borderRadius.md,
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {loading ? (
+                <>
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
+                    border: '2px solid transparent',
+                    borderTop: '2px solid currentColor',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }}></div>
+                  Publishing...
+                </>
+              ) : (
+                <>
+                  Publish Post
+                  <svg
+                    className="new-post-submit-icon"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    style={iconStyle}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    />
+                  </svg>
+                </>
+              )}
+            </Button>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }

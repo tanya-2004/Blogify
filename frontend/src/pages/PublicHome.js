@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../utils/axios';
-import BlogCard from '../components/ui/BlogCard';
+import { BlogCard } from '../components';
 import { isAuthenticated } from '../utils/auth';
 
 function PublicHome() {

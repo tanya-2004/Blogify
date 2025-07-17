@@ -1,13 +1,13 @@
 // Component Exports - Organized by Category
 
 // Layout Components
-export * from './layout';
+export { Layout, Header, Sidebar } from './layout';
 
 // UI Components  
-export * from './ui';
+export { BlogCard, LoadingSpinner, Button, Card, Input, Typography } from './ui';
 
 // Modal Components
-export * from './modals';
+export { NewPostModal } from './modals';
 
 // Authentication Components
-export * from './auth';
+export { ProtectedRoute } from './auth';

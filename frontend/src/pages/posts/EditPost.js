@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Typography from '../../components/ui/Typography';
-import Input from '../../components/ui/Input';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { Card, Button, Typography, Input, LoadingSpinner } from '../../components';
 import API from '../../utils/axios';
 
 function EditPost() {
