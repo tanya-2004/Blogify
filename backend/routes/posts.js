@@ -9,7 +9,15 @@ const {
   deletePost,
 } = require('../controllers/postController');
 
-// Public Routes
+// Test auth route
+router.get('/test-auth', auth, (req, res) => {
+  res.json({ 
+    msg: 'Authentication successful', 
+    userId: req.user,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Public Routes
 router.get('/mine', auth, require('../controllers/postController').getMyPosts);
 router.get('/', getAllPosts);

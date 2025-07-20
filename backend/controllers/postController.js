@@ -29,7 +29,15 @@ exports.getPostById = async (req, res) => {
 
 exports.createPost = async (req, res) => {
   try {
+    console.log('CreatePost - User ID from token:', req.user);
+    console.log('CreatePost - Request body:', req.body);
+    
     const { title, content, imageUrl, tags } = req.body;
+    
+    if (!title || !content) {
+      return res.status(400).json({ error: 'Title and content are required' });
+    }
+    
     const newPost = new Post({
       title,
       content,
@@ -37,9 +45,13 @@ exports.createPost = async (req, res) => {
       tags,
       author: req.user, // from auth middleware
     });
-    await newPost.save();
-    res.status(201).json(newPost);
+    
+    const savedPost = await newPost.save();
+    console.log('CreatePost - Post saved successfully:', savedPost._id);
+    
+    res.status(201).json(savedPost);
   } catch (err) {
+    console.error('CreatePost - Error:', err);
     res.status(500).json({ error: err.message });
   }
 };

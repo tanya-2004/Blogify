@@ -28,15 +28,31 @@ export default function Theme() {
       <div className="dashboard-container">
         {/* Header */}
         <div className="dashboard-header">
-          <Typography variant="h1" className="flex items-center space-x-3">
-            <svg className="w-8 h-8 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
-            </svg>
-            <span>Theme Customization</span>
-          </Typography>
-          <Typography variant="body2" className="text-text-secondary">
-            Customize the appearance of your blog to match your style
-          </Typography>
+          <div className="flex justify-between items-start">
+            <div>
+              <Typography variant="h1" className="flex items-center space-x-3">
+                <svg className="w-8 h-8 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
+                </svg>
+                <span>Theme Customization</span>
+              </Typography>
+              <Typography variant="body2" className="text-text-secondary">
+                Customize the appearance of your blog to match your style
+              </Typography>
+            </div>
+            
+            {/* Create Post Button */}
+            <Button
+              variant="primary"
+              onClick={() => setShowModal(true)}
+              className="flex items-center space-x-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Create Post</span>
+            </Button>
+          </div>
         </div>
 
         {/* Theme Selection */}
@@ -95,7 +111,7 @@ export default function Theme() {
         {/* Typography */}
         <Card className="mb-6">
           <Typography variant="h2" className="mb-4">
-            ✍️ Typography
+            Typography
           </Typography>
           <div className="space-y-4">
             <div>
@@ -118,7 +134,7 @@ export default function Theme() {
         {/* Preview */}
         <Card className="mb-6">
           <Typography variant="h2" className="mb-4">
-            👀 Preview
+            Preview
           </Typography>
           <div className="theme-preview-container">
             <div className="mb-4">
@@ -155,13 +171,21 @@ export default function Theme() {
             onClick={() => alert('Theme settings saved! (This is a demo)')}
             className="save-theme-btn"
           >
-            <span className="mr-2">💾</span>
             Save Changes
           </Button>
         </div>
       </div>
 
-      {showModal && <NewPostModal onClose={() => setShowModal(false)} />}
+      {showModal && (
+        <NewPostModal 
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          onPostCreated={() => {
+            setShowModal(false);
+            // Handle post creation success
+          }}
+        />
+      )}
     </>
   );
 }

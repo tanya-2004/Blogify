@@ -7,7 +7,7 @@ export { Layout, Header, Sidebar } from './layout';
 export { BlogCard, LoadingSpinner, Button, Card, Input, Typography } from './ui';
 
 // Modal Components
-export { NewPostModal } from './modals';
+export { NewPostModal, EditPostModal } from './modals';
 
 // Authentication Components
 export { ProtectedRoute } from './auth';

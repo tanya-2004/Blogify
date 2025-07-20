@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useSidebar } from '../../contexts/SidebarContext';
 
 const navItems = [
   { 
@@ -96,76 +96,116 @@ const navItems = [
 ];
 
 export default function Sidebar({ onNewPost }) {
-  const [open, setOpen] = useState(false);
+  const { isCollapsed, isMobileOpen, closeMobileSidebar } = useSidebar();
+  
+  // Debug logging
+  console.log('Sidebar render - isCollapsed:', isCollapsed, 'isMobileOpen:', isMobileOpen);
 
   return (
     <>
-      {/* Hamburger button for mobile */}
-      <button
-        className="md:hidden fixed top-16 left-4 z-30 bg-white p-2 rounded shadow"
-        onClick={() => setOpen(true)}
-        aria-label="Open sidebar"
-      >
-        <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="#333" strokeWidth="2" strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
-      </button>
-
-      {/* Overlay for mobile */}
-      {open && (
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-30 z-20 md:hidden"
-          onClick={() => setOpen(false)}
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+          onClick={closeMobileSidebar}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed z-30 top-16 left-0 h-[calc(100vh-4rem)] w-44 bg-white border-r border-gray-200 flex flex-col p-2 transition-transform duration-300 md:static md:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:top-0 md:h-screen shadow-lg md:shadow-none`}
-        style={{ minHeight: 'calc(100vh - 4rem)' }}
+        className={`fixed z-40 top-16 left-0 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 flex flex-col shadow-lg transition-all duration-300 ease-in-out overflow-hidden
+          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} 
+          md:translate-x-0 
+          ${isCollapsed ? 'md:w-16' : 'md:w-64'}
+        `}
       >
-        {/* Close button for mobile */}
-        <div className="flex md:hidden justify-end mb-4">
-          <button onClick={() => setOpen(false)} aria-label="Close sidebar">
-            <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path stroke="#333" strokeWidth="2" strokeLinecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-end p-4 border-b border-gray-200">
+          <button 
+            onClick={closeMobileSidebar} 
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Close sidebar"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
         
-        {/* Brand for desktop sidebar */}
-        <div className="hidden md:flex items-center space-x-2 mb-6 p-2">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold text-lg">
-            B
-          </div>
-          <span className="text-xl font-bold text-gray-800">Blogify</span>
-        </div>
-
-        <div className="mb-8">
-          <button className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 rounded-lg font-medium text-sm hover:from-orange-600 hover:to-red-600 transition shadow-md mb-4" onClick={onNewPost}>
-            + New Post
+        {/* New Post Button */}
+        <div className={`p-4 border-b border-gray-200 ${isCollapsed ? 'px-2' : ''}`}>
+          <button 
+            className={`w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-medium hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-md flex items-center justify-center gap-2 ${
+              isCollapsed ? 'p-3 rounded-xl' : 'py-3 px-4 rounded-lg'
+            }`}
+            onClick={onNewPost}
+            title={isCollapsed ? 'New Post' : ''}
+          >
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            {!isCollapsed && <span className="text-sm whitespace-nowrap">New Post</span>}
           </button>
         </div>
-        <nav className="flex-1">
-          <ul className="space-y-1">
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-2">
+          <ul className="space-y-1 px-2">
             {navItems.map((item) => (
               <li key={item.name}>
                 <NavLink
                   to={item.to}
                   className={({ isActive }) =>
-                    `flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition text-sm ${isActive ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-600 font-medium' : 'text-gray-700'}`
+                    `group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-100 transition-all duration-200 relative ${
+                      isActive 
+                        ? 'bg-blue-50 text-blue-700 font-medium' 
+                        : 'text-gray-700 hover:text-gray-900'
+                    } ${isCollapsed ? 'justify-center' : ''}`
                   }
-                  onClick={() => setOpen(false)}
+                  onClick={closeMobileSidebar}
+                  title={isCollapsed ? item.name : ''}
                 >
-                  <span className="text-base">{item.icon}</span>
-                  {item.name}
+                  <span className="flex-shrink-0">{item.icon}</span>
+                  {!isCollapsed && (
+                    <span className="text-sm font-medium whitespace-nowrap overflow-hidden">
+                      {item.name}
+                    </span>
+                  )}
+                  
+                  {/* Tooltip for collapsed state */}
+                  {isCollapsed && (
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                      {item.name}
+                    </div>
+                  )}
                 </NavLink>
               </li>
             ))}
           </ul>
         </nav>
-        <div className="border-t pt-4">
-          <a href="/" className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition font-medium">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+        {/* Bottom Section */}
+        <div className={`border-t border-gray-200 p-4 ${isCollapsed ? 'px-2' : ''}`}>
+          <a 
+            href="/" 
+            className={`flex items-center gap-3 text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all duration-200 rounded-xl p-2 group ${
+              isCollapsed ? 'justify-center' : ''
+            }`}
+            title={isCollapsed ? 'View Blog' : ''}
+          >
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
-            View Blog
+            {!isCollapsed && (
+              <span className="text-sm font-medium whitespace-nowrap">View Blog</span>
+            )}
+            
+            {/* Tooltip for collapsed state */}
+            {isCollapsed && (
+              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                View Blog
+              </div>
+            )}
           </a>
         </div>
       </aside>

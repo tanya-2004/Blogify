@@ -2,13 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import API from '../../utils/axios';
 import Button from '../ui/Button';
 import Typography from '../ui/Typography';
-import { borderRadius } from '../../styles/theme';
+import { isAuthenticated, debugAuthStatus } from '../../utils/auth';
 
 export default function NewPostModal({ open, onClose, onPostCreated }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [fieldContext, setFieldContext] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [focusedField, setFocusedField] = useState(null);
@@ -19,29 +20,85 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
     if (open && titleInputRef.current) {
       setTimeout(() => titleInputRef.current.focus(), 100);
     }
+    
+    // Debug authentication status when modal opens
+    if (open) {
+      debugAuthStatus();
+    }
   }, [open]);
 
   if (!open) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check authentication before submitting
+    if (!isAuthenticated()) {
+      setError('You must be logged in to create a post. Please log in and try again.');
+      return;
+    }
+    
+    // Validate image URL if provided
+    if (imageUrl && imageUrl.trim()) {
+      try {
+        new URL(imageUrl.trim());
+      } catch (urlError) {
+        setError('Please enter a valid image URL (e.g., https://example.com/image.jpg)');
+        return;
+      }
+    }
+    
     setLoading(true);
     setError('');
+    
+    console.log('Creating post with data:', { title, content, tags, imageUrl, fieldContext });
+    console.log('Image URL being sent:', imageUrl);
+    console.log('Image URL type:', typeof imageUrl);
+    console.log('Image URL length:', imageUrl?.length);
+    
     try {
-      await API.post('/posts', {
+      const postData = {
         title,
         content,
         tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-        imageUrl,
-      });
+      };
+      
+      // Only include imageUrl if it's not empty
+      if (imageUrl && imageUrl.trim()) {
+        postData.imageUrl = imageUrl.trim();
+      }
+      
+      // Only include fieldContext if it's not empty
+      if (fieldContext && fieldContext.trim()) {
+        postData.fieldContext = fieldContext.trim();
+      }
+      
+      console.log('Final post data being sent:', postData);
+      
+      const response = await API.post('/posts', postData);
+      
+      console.log('Post created successfully:', response.data);
+      
       setTitle('');
       setContent('');
       setTags('');
       setImageUrl('');
+      setFieldContext('');
       onPostCreated();
       onClose();
     } catch (err) {
-      setError(err.response?.data?.msg || err.response?.data?.error || 'Failed to create post');
+      console.error('Error creating post:', err);
+      console.error('Error response:', err.response?.data);
+      
+      if (err.response?.status === 401) {
+        setError('Authentication failed. Please log in again.');
+        // Optionally redirect to login
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      } else {
+        setError(err.response?.data?.msg || err.response?.data?.error || 'Failed to create post. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -112,6 +169,17 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
     minHeight: '120px',
     fontFamily: 'inherit',
     lineHeight: '1.5'
+  });
+
+  const getSelectStyle = (fieldName) => ({
+    ...getInputStyle(fieldName),
+    cursor: 'pointer',
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+    backgroundPosition: 'right 12px center',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: '16px',
+    paddingRight: '40px'
   });
 
   return (
@@ -291,7 +359,7 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
               </div>
             </div>
 
-            {/* Image URL */}
+            {/* Field / Context */}
             <div style={{ marginBottom: '20px' }}>
               <Typography 
                 variant="body1" 
@@ -302,28 +370,38 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                   color: theme.colors.text
                 }}
               >
-                Featured Image URL (Optional)
+                Field / Context (Optional)
               </Typography>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <div style={{ 
                   position: 'absolute', 
                   left: theme.spacing.md, 
-                  color: focusedField === 'imageUrl' ? theme.colors.primary : theme.colors.secondary,
-                  transition: 'color 0.2s ease'
+                  color: focusedField === 'fieldContext' ? theme.colors.primary : theme.colors.secondary,
+                  transition: 'color 0.2s ease',
+                  zIndex: 1
                 }}>
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                 </div>
-                <input
-                  type="url"
-                  placeholder="https://example.com/image.jpg"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  onFocus={() => setFocusedField('imageUrl')}
+                <select
+                  value={fieldContext}
+                  onChange={(e) => setFieldContext(e.target.value)}
+                  onFocus={() => setFocusedField('fieldContext')}
                   onBlur={() => setFocusedField(null)}
-                  style={getInputStyle('imageUrl')}
-                />
+                  style={getSelectStyle('fieldContext')}
+                >
+                  <option value="">Select a field or context...</option>
+                  <option value="Technology">Technology</option>
+                  <option value="Design">Design</option>
+                  <option value="Programming">Programming</option>
+                  <option value="AI/ML">AI/ML</option>
+                  <option value="Education">Education</option>
+                  <option value="Business">Business</option>
+                  <option value="Lifestyle">Lifestyle</option>
+                  <option value="Health">Health</option>
+                  <option value="Gaming">Gaming</option>
+                </select>
               </div>
             </div>
 
@@ -411,6 +489,42 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                 Separate tags with commas
               </Typography>
             </div>
+
+            {/* Image URL */}
+            <div style={{ marginBottom: '20px' }}>
+              <Typography 
+                variant="body1" 
+                style={{ 
+                  marginBottom: theme.spacing.sm, 
+                  display: 'block', 
+                  fontWeight: '500',
+                  color: theme.colors.text
+                }}
+              >
+                Featured Image URL (Optional)
+              </Typography>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <div style={{ 
+                  position: 'absolute', 
+                  left: theme.spacing.md, 
+                  color: focusedField === 'imageUrl' ? theme.colors.primary : theme.colors.secondary,
+                  transition: 'color 0.2s ease'
+                }}>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <input
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  onFocus={() => setFocusedField('imageUrl')}
+                  onBlur={() => setFocusedField(null)}
+                  style={getInputStyle('imageUrl')}
+                />
+              </div>
+            </div>
           </form>
         </main>
 
@@ -445,36 +559,52 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
               className="blog-button-primary-action new-post-submit-btn"
               style={{
                 minWidth: '140px',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: theme.spacing.sm,
                 fontSize: '14px',
                 borderRadius: theme.borderRadius.md,
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+                flexWrap: 'nowrap'
               }}
             >
               {loading ? (
-                <>
+                <span style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: theme.spacing.sm,
+                  whiteSpace: 'nowrap'
+                }}>
                   <div style={{
                     width: '16px',
                     height: '16px',
                     border: '2px solid transparent',
                     borderTop: '2px solid currentColor',
                     borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
+                    animation: 'spin 1s linear infinite',
+                    flexShrink: 0
                   }}></div>
                   Publishing...
-                </>
+                </span>
               ) : (
-                <>
+                <span style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: theme.spacing.sm,
+                  whiteSpace: 'nowrap'
+                }}>
                   Publish Post
                   <svg
                     className="new-post-submit-icon"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
-                    style={iconStyle}
+                    style={{
+                      ...iconStyle,
+                      flexShrink: 0
+                    }}
                   >
                     <path
                       strokeLinecap="round"
@@ -483,7 +613,7 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                       d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
                     />
                   </svg>
-                </>
+                </span>
               )}
             </Button>
           </div>
