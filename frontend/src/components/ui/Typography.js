@@ -1,13 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import '../../styles/design-system.css';
 
-/**
- * Typography Component
- * 
- * A semantic typography component following design system standards
- * Supports multiple variants, weights, and responsive text sizing
- */
 const Typography = ({
   children,
   variant = 'body',
@@ -19,10 +13,9 @@ const Typography = ({
   className = '',
   ...rest
 }) => {
-  // Map variants to HTML elements if not explicitly specified
   const defaultElements = {
     h1: 'h1',
-    h2: 'h2', 
+    h2: 'h2',
     h3: 'h3',
     h4: 'h4',
     h5: 'h5',
@@ -39,25 +32,21 @@ const Typography = ({
     overline: 'span'
   };
 
-  const Component = as || defaultElements[variant] || 'p';
-  
-  const baseClass = `text--${variant}`;
-  const weightClass = weight !== 'normal' ? `text--${weight}` : '';
-  const colorClass = color !== 'default' ? `text--${color}` : '';
-  const alignClass = align !== 'left' ? `text--${align}` : '';
-  const gradientClass = gradient ? 'text--gradient' : '';
-  
-  const textClasses = [
-    baseClass,
-    weightClass,
-    colorClass,
-    alignClass,
-    gradientClass,
-    className
-  ].filter(Boolean).join(' ');
+  const Component = useMemo(() => as || defaultElements[variant] || 'p', [as, variant]);
+
+  const textClasses = useMemo(() => {
+    return [
+      `text--${variant}`,
+      weight !== 'normal' && `text--${weight}`,
+      color !== 'default' && `text--${color}`,
+      align !== 'left' && `text--${align}`,
+      gradient && 'text--gradient',
+      className
+    ].filter(Boolean).join(' ');
+  }, [variant, weight, color, align, gradient, className]);
 
   return (
-    <Component className={textClasses} {...rest}>
+    <Component className={textClasses} data-testid="typography" {...rest}>
       {children}
     </Component>
   );
@@ -66,41 +55,18 @@ const Typography = ({
 Typography.propTypes = {
   children: PropTypes.node.isRequired,
   variant: PropTypes.oneOf([
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'hero',
-    'title', 
-    'subtitle',
-    'heading',
-    'subheading',
-    'body1',
-    'body2',
-    'body',
-    'caption',
-    'overline'
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'hero', 'title', 'subtitle', 'heading', 'subheading',
+    'body1', 'body2', 'body',
+    'caption', 'overline'
   ]),
   as: PropTypes.elementType,
   weight: PropTypes.oneOf([
-    'thin',
-    'light',
-    'normal',
-    'medium',
-    'semibold',
-    'bold',
-    'extrabold'
+    'thin', 'light', 'normal', 'medium', 'semibold', 'bold', 'extrabold'
   ]),
   color: PropTypes.oneOf([
-    'default',
-    'primary',
-    'secondary',
-    'muted',
-    'success',
-    'warning',
-    'error'
+    'default', 'primary', 'secondary', 'muted',
+    'success', 'warning', 'error'
   ]),
   align: PropTypes.oneOf(['left', 'center', 'right', 'justify']),
   gradient: PropTypes.bool,

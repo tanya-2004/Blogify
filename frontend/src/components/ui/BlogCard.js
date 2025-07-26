@@ -5,17 +5,11 @@ import Card from './Card';
 import Typography from './Typography';
 import Button from './Button';
 
-/**
- * BlogCard Component
- * 
- * A premium blog post card following design system standards
- * Features glassmorphic design, semantic HTML, and accessibility
- */
 const BlogCard = ({ post }) => {
   if (!post) return null;
 
   const readTime = Math.ceil(post.content?.length / 250) || 1;
-  const excerpt = post.content?.slice(0, 160) + '...' || '';
+  const excerpt = post.content ? post.content.slice(0, 160) + '...' : '';
   const publishDate = new Date(post.createdAt).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -23,8 +17,8 @@ const BlogCard = ({ post }) => {
   });
 
   return (
-    <Card 
-      variant="glass" 
+    <Card
+      variant="glass"
       className="blog-card group"
       role="article"
       aria-labelledby={`blog-card-title-${post._id}`}
@@ -40,19 +34,23 @@ const BlogCard = ({ post }) => {
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900" />
+            <img
+              src="/fallback.jpg"
+              alt="Default blog illustration"
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
           )}
-          
-          {/* Gradient Overlay */}
+
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-          
+
           {/* Category Badge */}
           <div className="absolute top-4 right-4">
             <span className="px-3 py-1 bg-white/95 backdrop-blur-sm text-gray-700 text-sm font-medium rounded-full border border-white/20 shadow-lg">
-              Article
+              {post.category || 'Article'}
             </span>
           </div>
-          
+
           {/* Read Time Badge */}
           <div className="absolute bottom-4 left-4">
             <span className="px-3 py-1 bg-black/60 backdrop-blur-sm text-white text-sm font-medium rounded-full">
@@ -83,8 +81,8 @@ const BlogCard = ({ post }) => {
               </Typography>
             </div>
           </div>
-          
-          <time 
+
+          <time
             dateTime={post.createdAt}
             className="text-gray-500 text-sm font-light"
             title={`Published on ${publishDate}`}
@@ -100,7 +98,7 @@ const BlogCard = ({ post }) => {
           weight="bold"
           className="text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300"
         >
-          <Link 
+          <Link
             to={`/post/${post._id}`}
             className="hover:underline decoration-2 underline-offset-4"
             aria-describedby={`blog-card-excerpt-${post._id}`}
@@ -123,7 +121,7 @@ const BlogCard = ({ post }) => {
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4" role="list" aria-label="Post tags">
             {post.tags.slice(0, 3).map((tag, index) => (
-              <span 
+              <span
                 key={index}
                 role="listitem"
                 className="px-3 py-1 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-600 rounded-full text-xs border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200 cursor-pointer font-medium"
@@ -155,24 +153,20 @@ const BlogCard = ({ post }) => {
           >
             Read More
           </Button>
-          
+
           <div className="flex items-center space-x-4 text-gray-400">
             <div className="flex items-center space-x-1">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
-              <span className="text-sm font-light">
-                {Math.floor(Math.random() * 100) + 20}
-              </span>
+              <span className="text-sm font-light">—</span>
             </div>
             <div className="flex items-center space-x-1">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
-              <span className="text-sm font-light">
-                {Math.floor(Math.random() * 20) + 5}
-              </span>
+              <span className="text-sm font-light">—</span>
             </div>
           </div>
         </div>
@@ -191,6 +185,7 @@ BlogCard.propTypes = {
     }),
     createdAt: PropTypes.string.isRequired,
     imageUrl: PropTypes.string,
+    category: PropTypes.string,
     tags: PropTypes.arrayOf(PropTypes.string)
   }).isRequired
 };

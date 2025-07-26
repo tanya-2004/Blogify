@@ -20,36 +20,20 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
     if (open && postId) {
       setFetchingPost(true);
       setError('');
-      
       API.get(`/posts/${postId}`)
-        .then((response) => {
-          const post = response.data;
-          setTitle(post.title || '');
-          setContent(post.content || '');
-          setTags(post.tags ? post.tags.join(', ') : '');
-          setImageUrl(post.imageUrl || '');
-          
-          // Focus title input after data is loaded
-          setTimeout(() => {
-            if (titleInputRef.current) {
-              titleInputRef.current.focus();
-            }
-          }, 100);
+        .then(({ data }) => {
+          setTitle(data.title || '');
+          setContent(data.content || '');
+          setTags(data.tags?.join(', ') || '');
+          setImageUrl(data.imageUrl || '');
+          setTimeout(() => titleInputRef.current?.focus(), 100);
         })
-        .catch((err) => {
-          console.error('Error fetching post:', err);
-          setError('Failed to load post data. Please try again.');
-        })
-        .finally(() => {
-          setFetchingPost(false);
-        });
+        .catch(() => setError('Failed to load post data. Please try again.'))
+        .finally(() => setFetchingPost(false));
     }
-    
-    // Debug authentication status when modal opens
-    if (open) {
-      debugAuthStatus();
-    }
+    if (open) debugAuthStatus();
   }, [open, postId]);
+
 
   // Clear form when modal closes
   useEffect(() => {
@@ -63,74 +47,52 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
     }
   }, [open]);
 
-  // Add loading spinner keyframes
   useEffect(() => {
-    if (loading) {
-      const style = document.createElement('style');
-      style.textContent = `
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `;
-      document.head.appendChild(style);
-      return () => document.head.removeChild(style);
-    }
-  }, [loading]);
+    const handleEsc = (e) => e.key === 'Escape' && onClose();
+    if (open) document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [open, onClose]);
 
-  if (!open) return null;
+  const handleBackdropClick = (e) => e.target === e.currentTarget && onClose();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Check authentication before submitting
     if (!isAuthenticated()) {
-      setError('You must be logged in to edit a post. Please log in and try again.');
+      setError('You must be logged in to edit a post.');
       return;
     }
-    
+    if (content.trim().length < 20) {
+      setError('Please add at least 20 characters of content.');
+      return;
+    }
+
     setLoading(true);
     setError('');
-    
-    console.log('Updating post with data:', { title, content, tags, imageUrl });
-    
     try {
-      const response = await API.put(`/posts/${postId}`, {
+      await API.put(`/posts/${postId}`, {
         title,
         content,
-        tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-        imageUrl,
+        tags: [...new Set(tags.split(',').map(t => t.trim()).filter(Boolean))],
+        imageUrl
       });
-      
-      console.log('Post updated successfully:', response.data);
-      
       onPostUpdated();
       onClose();
     } catch (err) {
-      console.error('Error updating post:', err);
-      console.error('Error response:', err.response?.data);
-      
-      if (err.response?.status === 401) {
-        setError('Authentication failed. Please log in again.');
-        // Optionally redirect to login
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
-      } else if (err.response?.status === 404) {
-        setError('Post not found. It may have been deleted.');
+      const status = err.response?.status;
+      if (status === 401) {
+        setError('Authentication failed. Redirecting...');
+        setTimeout(() => (window.location.href = '/login'), 2000);
+      } else if (status === 404) {
+        setError('Post not found.');
       } else {
-        setError(err.response?.data?.msg || err.response?.data?.error || 'Failed to update post. Please try again.');
+        setError(err.response?.data?.msg || 'Update failed. Try again.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
+  if (!open) return null;
 
   // Dynamic styling variables for consistency
   const theme = {
@@ -165,12 +127,12 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
     }
   };
 
-  const iconStyle = { 
-    width: '16px', 
-    height: '16px', 
-    minWidth: '16px', 
-    minHeight: '16px', 
-    flexShrink: 0 
+  const iconStyle = {
+    width: '16px',
+    height: '16px',
+    minWidth: '16px',
+    minHeight: '16px',
+    flexShrink: 0
   };
 
   // Dynamic input style based on focus state
@@ -194,7 +156,7 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
   });
 
   return (
-    <div 
+    <div
       className="blog-modal-overlay edit-post-modal-backdrop"
       onClick={handleBackdropClick}
       role="dialog"
@@ -202,10 +164,7 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
       aria-labelledby="edit-post-modal-title"
       style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        top: 0, left: 0, right: 0, bottom: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         backdropFilter: 'blur(8px)',
         zIndex: 1400,
@@ -215,22 +174,21 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
         padding: theme.spacing.lg
       }}
     >
-      <div 
-        className="blog-modal-container edit-post-modal-container" 
+      <div
+        className="blog-modal-container edit-post-modal-container"
         style={{
           backgroundColor: theme.colors.white,
           borderRadius: theme.borderRadius.lg,
-          padding: '0',
+          padding: 0,
           maxWidth: '600px',
           width: '100%',
           maxHeight: '90vh',
           overflowY: 'auto',
-          boxShadow: theme.shadows.modal,
-          transform: 'scale(1)',
-          transition: 'transform 0.2s ease'
+          boxShadow: theme.shadows.modal
         }}
       >
-        
+
+
         <header className="blog-modal-header edit-post-modal-header" style={{
           padding: `${theme.spacing.xl} ${theme.spacing.xl} 0 ${theme.spacing.xl}`,
           position: 'relative',
@@ -256,10 +214,10 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
             </div>
-            <Typography 
+            <Typography
               id="edit-post-modal-title"
-              variant="title" 
-              weight="bold" 
+              variant="title"
+              weight="bold"
               className="blog-modal-title edit-post-modal-title dashboard-heading-text"
               style={{ color: theme.colors.text }}
             >
@@ -329,11 +287,11 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
 
           {error && (
             <div className="blog-form-error-message edit-post-error-display" role="alert" aria-live="polite">
-              <div className="blog-form-error-content" style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: theme.spacing.sm, 
-                color: theme.colors.error, 
+              <div className="blog-form-error-content" style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: theme.spacing.sm,
+                color: theme.colors.error,
                 marginBottom: theme.spacing.md,
                 padding: theme.spacing.md,
                 backgroundColor: `${theme.colors.error}10`,
@@ -354,14 +312,14 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
               flexDirection: 'column',
               gap: '0'
             }}>
-              
+
               {/* Post Title */}
               <div style={{ marginBottom: '20px' }}>
-                <Typography 
-                  variant="body1" 
-                  style={{ 
-                    marginBottom: theme.spacing.sm, 
-                    display: 'block', 
+                <Typography
+                  variant="body1"
+                  style={{
+                    marginBottom: theme.spacing.sm,
+                    display: 'block',
                     fontWeight: '500',
                     color: theme.colors.text
                   }}
@@ -369,9 +327,9 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
                   Post Title *
                 </Typography>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <div style={{ 
-                    position: 'absolute', 
-                    left: theme.spacing.md, 
+                  <div style={{
+                    position: 'absolute',
+                    left: theme.spacing.md,
                     color: focusedField === 'title' ? theme.colors.primary : theme.colors.secondary,
                     transition: 'color 0.2s ease'
                   }}>
@@ -395,11 +353,11 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
 
               {/* Image URL */}
               <div style={{ marginBottom: '20px' }}>
-                <Typography 
-                  variant="body1" 
-                  style={{ 
-                    marginBottom: theme.spacing.sm, 
-                    display: 'block', 
+                <Typography
+                  variant="body1"
+                  style={{
+                    marginBottom: theme.spacing.sm,
+                    display: 'block',
                     fontWeight: '500',
                     color: theme.colors.text
                   }}
@@ -407,9 +365,9 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
                   Featured Image URL (Optional)
                 </Typography>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <div style={{ 
-                    position: 'absolute', 
-                    left: theme.spacing.md, 
+                  <div style={{
+                    position: 'absolute',
+                    left: theme.spacing.md,
                     color: focusedField === 'imageUrl' ? theme.colors.primary : theme.colors.secondary,
                     transition: 'color 0.2s ease'
                   }}>
@@ -431,11 +389,11 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
 
               {/* Content */}
               <div style={{ marginBottom: '20px' }}>
-                <Typography 
-                  variant="body1" 
-                  style={{ 
-                    marginBottom: theme.spacing.sm, 
-                    display: 'block', 
+                <Typography
+                  variant="body1"
+                  style={{
+                    marginBottom: theme.spacing.sm,
+                    display: 'block',
                     fontWeight: '500',
                     color: theme.colors.text
                   }}
@@ -443,10 +401,10 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
                   Content *
                 </Typography>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start' }}>
-                  <div style={{ 
-                    position: 'absolute', 
-                    top: theme.spacing.md, 
-                    left: theme.spacing.md, 
+                  <div style={{
+                    position: 'absolute',
+                    top: theme.spacing.md,
+                    left: theme.spacing.md,
                     color: focusedField === 'content' ? theme.colors.primary : theme.colors.secondary,
                     transition: 'color 0.2s ease'
                   }}>
@@ -469,11 +427,11 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
 
               {/* Tags */}
               <div style={{ marginBottom: '20px' }}>
-                <Typography 
-                  variant="body1" 
-                  style={{ 
-                    marginBottom: theme.spacing.sm, 
-                    display: 'block', 
+                <Typography
+                  variant="body1"
+                  style={{
+                    marginBottom: theme.spacing.sm,
+                    display: 'block',
                     fontWeight: '500',
                     color: theme.colors.text
                   }}
@@ -481,9 +439,9 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
                   Tags (Optional)
                 </Typography>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <div style={{ 
-                    position: 'absolute', 
-                    left: theme.spacing.md, 
+                  <div style={{
+                    position: 'absolute',
+                    left: theme.spacing.md,
                     color: focusedField === 'tags' ? theme.colors.primary : theme.colors.secondary,
                     transition: 'color 0.2s ease'
                   }}>
@@ -501,11 +459,11 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
                     style={getInputStyle('tags')}
                   />
                 </div>
-                <Typography 
-                  variant="caption" 
-                  style={{ 
-                    marginTop: theme.spacing.xs, 
-                    fontSize: '12px', 
+                <Typography
+                  variant="caption"
+                  style={{
+                    marginTop: theme.spacing.xs,
+                    fontSize: '12px',
                     color: theme.colors.textLight,
                     display: 'block'
                   }}
@@ -527,10 +485,10 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
             justifyContent: 'flex-end',
             gap: theme.spacing.md
           }}>
-            <Button 
-              type="button" 
-              variant="secondary" 
-              onClick={onClose} 
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onClose}
               disabled={loading || fetchingPost}
               style={{
                 minWidth: '100px',
@@ -560,9 +518,9 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
               }}
             >
               {loading ? (
-                <span style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <span style={{
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: theme.spacing.sm,
                   whiteSpace: 'nowrap'
                 }}>
@@ -578,9 +536,9 @@ export default function EditPostModal({ open, onClose, onPostUpdated, postId }) 
                   Updating...
                 </span>
               ) : (
-                <span style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <span style={{
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: theme.spacing.sm,
                   whiteSpace: 'nowrap'
                 }}>

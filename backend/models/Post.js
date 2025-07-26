@@ -6,8 +6,6 @@ const PostSchema = new mongoose.Schema({
   imageUrl: String,
   author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   tags: [String],
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: Date
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Post', PostSchema);

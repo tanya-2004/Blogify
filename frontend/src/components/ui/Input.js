@@ -1,13 +1,7 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import '../../styles/design-system.css';
 
-/**
- * Input Component
- * 
- * A flexible input component with support for various states,
- * validation, and accessibility features
- */
 const Input = forwardRef(({
   label,
   error,
@@ -23,27 +17,22 @@ const Input = forwardRef(({
   id,
   ...rest
 }, ref) => {
-  const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
-  
-  const baseClass = 'input';
-  const sizeClass = size !== 'medium' ? `input--${size}` : '';
-  const variantClass = variant !== 'default' ? `input--${variant}` : '';
-  const errorClass = error ? 'input--error' : '';
-  
+  const inputId = useMemo(() => id || `input-${Math.random().toString(36).substr(2, 9)}`, [id]);
+
   const inputClasses = [
-    baseClass,
-    sizeClass,
-    variantClass,
-    errorClass,
-    leftIcon ? 'input--with-left-icon' : '',
-    rightIcon ? 'input--with-right-icon' : '',
+    'input',
+    size !== 'medium' && `input--${size}`,
+    variant !== 'default' && `input--${variant}`,
+    error && 'input--error',
+    leftIcon && 'input--with-left-icon',
+    rightIcon && 'input--with-right-icon',
     className
   ].filter(Boolean).join(' ');
 
   return (
-    <div className="input-group">
+    <div className="input-group" data-testid="input-group">
       {label && (
-        <label 
+        <label
           htmlFor={inputId}
           className={`input-label ${required ? 'input-label--required' : ''}`}
         >
@@ -51,14 +40,14 @@ const Input = forwardRef(({
           {required && <span className="input-label__required" aria-label="required">*</span>}
         </label>
       )}
-      
+
       <div className="input-wrapper">
         {leftIcon && (
           <div className="input-icon input-icon--left" aria-hidden="true">
             {leftIcon}
           </div>
         )}
-        
+
         <input
           ref={ref}
           id={inputId}
@@ -66,32 +55,33 @@ const Input = forwardRef(({
           className={inputClasses}
           disabled={disabled}
           required={required}
-          aria-invalid={error ? 'true' : 'false'}
+          aria-invalid={!!error}
           aria-describedby={
             [
               error ? `${inputId}-error` : '',
               hint ? `${inputId}-hint` : ''
             ].filter(Boolean).join(' ') || undefined
           }
+          data-testid="input-field"
           {...rest}
         />
-        
+
         {rightIcon && (
           <div className="input-icon input-icon--right" aria-hidden="true">
             {rightIcon}
           </div>
         )}
       </div>
-      
+
       {hint && (
         <div id={`${inputId}-hint`} className="input-hint">
           {hint}
         </div>
       )}
-      
+
       {error && (
-        <div 
-          id={`${inputId}-error`} 
+        <div
+          id={`${inputId}-error`}
           className="input-error"
           role="alert"
           aria-live="polite"

@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useMemo } from 'react';
+import PropTypes from 'prop-types';
 
 const SidebarContext = createContext();
 
@@ -16,29 +17,33 @@ export const SidebarProvider = ({ children }) => {
 
   const toggleSidebar = () => {
     console.log('toggleSidebar called, current isCollapsed:', isCollapsed);
-    setIsCollapsed(!isCollapsed);
+    setIsCollapsed(prev => !prev);
   };
 
   const toggleMobileSidebar = () => {
     console.log('toggleMobileSidebar called, current isMobileOpen:', isMobileOpen);
-    setIsMobileOpen(!isMobileOpen);
+    setIsMobileOpen(prev => !prev);
   };
 
   const closeMobileSidebar = () => {
     setIsMobileOpen(false);
   };
 
+  const value = useMemo(() => ({
+    isCollapsed,
+    isMobileOpen,
+    toggleSidebar,
+    toggleMobileSidebar,
+    closeMobileSidebar
+  }), [isCollapsed, isMobileOpen]);
+
   return (
-    <SidebarContext.Provider
-      value={{
-        isCollapsed,
-        isMobileOpen,
-        toggleSidebar,
-        toggleMobileSidebar,
-        closeMobileSidebar,
-      }}
-    >
+    <SidebarContext.Provider value={value} data-testid="sidebar-provider">
       {children}
     </SidebarContext.Provider>
   );
+};
+
+SidebarProvider.propTypes = {
+  children: PropTypes.node.isRequired
 };
