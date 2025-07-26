@@ -14,11 +14,11 @@ function CreatePost() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     const postData = {
       title,
       content,
-      tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+      tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
       imageUrl,
     };
 
@@ -72,6 +72,19 @@ function CreatePost() {
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
             />
+            {imageUrl && (
+              <img
+                src={imageUrl}
+                alt="Featured preview"
+                style={{
+                  marginTop: '0.5rem',
+                  maxWidth: '100%',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd'
+                }}
+                onError={() => setImageUrl('')}
+              />
+            )}
           </div>
 
           <div>
@@ -79,6 +92,7 @@ function CreatePost() {
               Content
             </Typography>
             <textarea
+              aria-label="Post content"
               placeholder="Write your story here..."
               rows="12"
               value={content}
@@ -101,6 +115,13 @@ function CreatePost() {
             <Typography variant="caption" className="force-black-text mt-2 block">
               Separate tags with commas
             </Typography>
+            <div className="flex gap-2 flex-wrap mt-2">
+              {tags.split(',').map(tag => tag.trim()).filter(Boolean).map((tag, i) => (
+                <span key={i} className="px-2 py-1 text-sm bg-primary/10 text-primary rounded">
+                  {tag}
+                </span>
+              ))}
+            </div>
           </div>
 
           <div className="flex justify-end space-x-4 pt-6 border-t border-border-color">

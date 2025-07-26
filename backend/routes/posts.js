@@ -7,23 +7,23 @@ const {
   createPost,
   updatePost,
   deletePost,
+  getMyPosts
 } = require('../controllers/postController');
 
-// Test auth route
 router.get('/test-auth', auth, (req, res) => {
-  res.json({ 
-    msg: 'Authentication successful', 
+  res.json({
+    msg: 'Authentication successful',
     userId: req.user,
     timestamp: new Date().toISOString()
   });
 });
 
-// Public Routes
-router.get('/mine', auth, require('../controllers/postController').getMyPosts);
+// 🟢 Public Routes
 router.get('/', getAllPosts);
 router.get('/:id', getPostById);
 
-// Protected Routes
+// 🔐 Protected Routes
+router.get('/mine', auth, getMyPosts);
 router.post('/', auth, createPost);
 router.put('/:id', auth, updatePost);
 router.delete('/:id', auth, deletePost);

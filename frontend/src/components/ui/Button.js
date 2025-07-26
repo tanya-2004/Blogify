@@ -2,12 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import '../../styles/design-system.css';
 
-/**
- * Button Component
- * 
- * A versatile button component following design system standards
- * Supports multiple variants, sizes, states, and accessibility features
- */
 const Button = ({
   children,
   variant = 'primary',
@@ -22,16 +16,11 @@ const Button = ({
   onClick,
   ...rest
 }) => {
-  const baseClass = 'button';
-  const variantClass = `button--${variant}`;
-  const sizeClass = size !== 'medium' ? `button--${size}` : '';
-  const loadingClass = loading ? 'button--loading' : '';
-  
   const buttonClasses = [
-    baseClass,
-    variantClass,
-    sizeClass,
-    loadingClass,
+    'button',
+    `button--${variant}`,
+    size !== 'medium' ? `button--${size}` : '',
+    loading ? 'button--loading' : '',
     className
   ].filter(Boolean).join(' ');
 
@@ -41,71 +30,49 @@ const Button = ({
     }
   };
 
-  // For button elements
-  if (Component === 'button') {
-    return (
-      <Component
-        type={type}
-        className={buttonClasses}
-        disabled={disabled || loading}
-        onClick={handleClick}
-        aria-disabled={disabled || loading}
-        {...rest}
-      >
-        {loading ? (
-          <>
-            <span className="sr-only">Loading...</span>
-            <span aria-hidden="true">Loading...</span>
-          </>
-        ) : (
-          <>
-            {leftIcon && (
-              <span className="button__icon button__icon--left" aria-hidden="true">
-                {leftIcon}
-              </span>
-            )}
-            <span className="button__content">{children}</span>
-            {rightIcon && (
-              <span className="button__icon button__icon--right" aria-hidden="true">
-                {rightIcon}
-              </span>
-            )}
-          </>
-        )}
-      </Component>
-    );
-  }
+  const content = loading ? (
+    <>
+      <span className="sr-only">Loading...</span>
+      <span aria-hidden="true" className="button__loading-indicator">Loading...</span>
+    </>
+  ) : (
+    <>
+      {leftIcon && (
+        <span className="button__icon button__icon--left" aria-hidden="true">
+          {leftIcon}
+        </span>
+      )}
+      <span className="button__content">{children}</span>
+      {rightIcon && (
+        <span className="button__icon button__icon--right" aria-hidden="true">
+          {rightIcon}
+        </span>
+      )}
+    </>
+  );
 
-  // For other elements (like Link)
-  return (
+  const sharedProps = {
+    className: buttonClasses,
+    onClick: handleClick,
+    'aria-disabled': disabled || loading,
+    ...rest
+  };
+
+  return Component === 'button' ? (
+    <button
+      type={type}
+      disabled={disabled || loading}
+      {...sharedProps}
+    >
+      {content}
+    </button>
+  ) : (
     <Component
-      className={buttonClasses}
-      onClick={handleClick}
       role="button"
       tabIndex={disabled || loading ? -1 : 0}
-      aria-disabled={disabled || loading}
-      {...rest}
+      {...sharedProps}
     >
-      {loading ? (
-        <>
-          <span className="sr-only">Loading...</span>
-          <span aria-hidden="true">Loading...</span>
-        </>
-      ) : (
-        <>
-          {leftIcon && (
-            <span className="button__icon button__icon--left" aria-hidden="true">
-              {leftIcon}
-            </span>
-          )}
-          <span className="button__content">{children}</span>
-          {rightIcon && (
-            <span className="button__icon button__icon--right" aria-hidden="true">
-              {rightIcon}
-            </span>
-          )}
-        </>
-      )}
+      {content}
     </Component>
   );
 };

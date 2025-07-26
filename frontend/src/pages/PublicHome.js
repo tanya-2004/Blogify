@@ -12,9 +12,9 @@ function PublicHome() {
   useEffect(() => {
     API.get('/posts')
       .then((res) => {
-        // Ensure we always have an array
         const postsData = Array.isArray(res.data) ? res.data : [];
-        setPosts(postsData);
+        const sortedPosts = postsData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setPosts(sortedPosts);
         setLoading(false);
       })
       .catch((err) => {
@@ -51,7 +51,7 @@ function PublicHome() {
             {/* Auth Buttons */}
             <div className="flex space-x-4">
               {isAuth ? (
-                <Link 
+                <Link
                   to="/dashboard"
                   className="px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl"
                 >
@@ -59,13 +59,13 @@ function PublicHome() {
                 </Link>
               ) : (
                 <>
-                  <Link 
+                  <Link
                     to="/signin"
                     className="px-6 py-3 rounded-2xl border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 font-medium"
                   >
                     Sign In
                   </Link>
-                  <Link 
+                  <Link
                     to="/signup"
                     className="px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl"
                   >
@@ -83,7 +83,7 @@ function PublicHome() {
         {/* Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-        
+
         {/* Animated Grid Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -94,12 +94,12 @@ function PublicHome() {
             backgroundSize: '50px 50px'
           }}></div>
         </div>
-        
+
         {/* Floating Elements */}
         <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-blue-500/10 rounded-full blur-xl animate-pulse"></div>
         <div className="absolute top-1/3 right-1/4 w-48 h-48 bg-purple-500/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }}></div>
         <div className="absolute bottom-1/4 left-1/3 w-24 h-24 bg-indigo-500/10 rounded-full blur-lg animate-pulse" style={{ animationDelay: '4s' }}></div>
-        
+
         <div className="relative z-10 max-w-5xl mx-auto text-center">
           <div className="mb-8">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-light text-white mb-4 leading-tight animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
@@ -110,16 +110,16 @@ function PublicHome() {
               <span className="text-white/80">That Matter</span>
             </h1>
           </div>
-          
+
           <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto font-light leading-relaxed animate-fadeInUp" style={{ animationDelay: '0.8s' }}>
-            Where visionary thoughts meet exceptional design. 
+            Where visionary thoughts meet exceptional design.
             <span className="text-blue-400">Create, share, and inspire</span> with our premium publishing platform.
           </p>
-          
+
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fadeInUp" style={{ animationDelay: '1s' }}>
             {isAuth ? (
-              <Link 
+              <Link
                 to="/dashboard"
                 className="group relative px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full font-medium text-lg transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/25 transform hover:-translate-y-1"
               >
@@ -128,14 +128,14 @@ function PublicHome() {
               </Link>
             ) : (
               <>
-                <Link 
+                <Link
                   to="/signup"
                   className="group relative px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full font-medium text-lg transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/25 transform hover:-translate-y-1"
                 >
                   <span className="relative z-10">Start Creating</span>
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full"></div>
                 </Link>
-                <Link 
+                <Link
                   to="/signin"
                   className="px-8 py-4 border-2 border-white/20 text-white rounded-full font-medium text-lg backdrop-blur-sm hover:bg-white/10 hover:border-white/30 transition-all duration-300 hover:-translate-y-1"
                 >
@@ -150,7 +150,7 @@ function PublicHome() {
       {/* Featured Content */}
       <section className="py-32 bg-white relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-        
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
             <div className="inline-flex items-center space-x-2 text-sm font-medium text-gray-500 tracking-widest uppercase mb-6">
@@ -158,7 +158,7 @@ function PublicHome() {
               <span>Featured Stories</span>
               <div className="w-8 h-px bg-gray-300"></div>
             </div>
-            
+
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-light text-gray-900 mb-6 leading-tight">
               Latest
               <span className="block font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
@@ -174,7 +174,7 @@ function PublicHome() {
             <div className="flex justify-center items-center py-32">
               <div className="flex space-x-3">
                 {[0, 1, 2].map((i) => (
-                  <div 
+                  <div
                     key={i}
                     className="w-4 h-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-pulse"
                     style={{ animationDelay: `${i * 0.2}s` }}
@@ -194,14 +194,14 @@ function PublicHome() {
                 Be the visionary who paints the first stroke. Share your unique perspective with the world.
               </p>
               {isAuth ? (
-                <Link 
+                <Link
                   to="/create"
                   className="px-10 py-4 bg-gradient-to-r from-slate-800 to-slate-700 text-white rounded-full hover:from-slate-700 hover:to-slate-600 transition-all duration-300 font-medium text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                 >
                   Create Your First Post
                 </Link>
               ) : (
-                <Link 
+                <Link
                   to="/signup"
                   className="px-10 py-4 bg-gradient-to-r from-slate-800 to-slate-700 text-white rounded-full hover:from-slate-700 hover:to-slate-600 transition-all duration-300 font-medium text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                 >

@@ -15,70 +15,53 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
   const [focusedField, setFocusedField] = useState(null);
   const titleInputRef = useRef(null);
 
-  // Auto-focus title input when modal opens
   useEffect(() => {
     if (open && titleInputRef.current) {
       setTimeout(() => titleInputRef.current.focus(), 100);
     }
-    
-    // Debug authentication status when modal opens
     if (open) {
       debugAuthStatus();
     }
   }, [open]);
 
-  if (!open) return null;
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Check authentication before submitting
+
     if (!isAuthenticated()) {
       setError('You must be logged in to create a post. Please log in and try again.');
       return;
     }
-    
-    // Validate image URL if provided
+
     if (imageUrl && imageUrl.trim()) {
       try {
         new URL(imageUrl.trim());
-      } catch (urlError) {
+      } catch {
         setError('Please enter a valid image URL (e.g., https://example.com/image.jpg)');
         return;
       }
     }
-    
+
     setLoading(true);
     setError('');
-    
-    console.log('Creating post with data:', { title, content, tags, imageUrl, fieldContext });
-    console.log('Image URL being sent:', imageUrl);
-    console.log('Image URL type:', typeof imageUrl);
-    console.log('Image URL length:', imageUrl?.length);
-    
+
     try {
       const postData = {
         title,
         content,
-        tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+        tags: [...new Set(tags.split(',').map(t => t.trim()).filter(Boolean))]
       };
-      
-      // Only include imageUrl if it's not empty
-      if (imageUrl && imageUrl.trim()) {
-        postData.imageUrl = imageUrl.trim();
-      }
-      
-      // Only include fieldContext if it's not empty
-      if (fieldContext && fieldContext.trim()) {
-        postData.fieldContext = fieldContext.trim();
-      }
-      
-      console.log('Final post data being sent:', postData);
-      
-      const response = await API.post('/posts', postData);
-      
-      console.log('Post created successfully:', response.data);
-      
+
+      if (imageUrl.trim()) postData.imageUrl = imageUrl.trim();
+      if (fieldContext.trim()) postData.fieldContext = fieldContext.trim();
+
+      await API.post('/posts', postData);
+
       setTitle('');
       setContent('');
       setTags('');
@@ -87,12 +70,9 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
       onPostCreated();
       onClose();
     } catch (err) {
-      console.error('Error creating post:', err);
-      console.error('Error response:', err.response?.data);
-      
-      if (err.response?.status === 401) {
+      const status = err.response?.status;
+      if (status === 401) {
         setError('Authentication failed. Please log in again.');
-        // Optionally redirect to login
         setTimeout(() => {
           window.location.href = '/login';
         }, 2000);
@@ -104,11 +84,7 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
     }
   };
 
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
+  if (!open) return null;
 
   // Dynamic styling variables for consistency
   const theme = {
@@ -143,12 +119,12 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
     }
   };
 
-  const iconStyle = { 
-    width: '16px', 
-    height: '16px', 
-    minWidth: '16px', 
-    minHeight: '16px', 
-    flexShrink: 0 
+  const iconStyle = {
+    width: '16px',
+    height: '16px',
+    minWidth: '16px',
+    minHeight: '16px',
+    flexShrink: 0
   };
 
   // Dynamic input style based on focus state
@@ -183,7 +159,7 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
   });
 
   return (
-    <div 
+    <div
       className="blog-modal-overlay new-post-modal-backdrop"
       onClick={handleBackdropClick}
       role="dialog"
@@ -204,8 +180,8 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
         padding: theme.spacing.lg
       }}
     >
-      <div 
-        className="blog-modal-container new-post-modal-container" 
+      <div
+        className="blog-modal-container new-post-modal-container"
         style={{
           backgroundColor: theme.colors.white,
           borderRadius: theme.borderRadius.lg,
@@ -219,7 +195,7 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
           transition: 'transform 0.2s ease'
         }}
       >
-        
+
         <header className="blog-modal-header new-post-modal-header" style={{
           padding: `${theme.spacing.xl} ${theme.spacing.xl} 0 ${theme.spacing.xl}`,
           position: 'relative',
@@ -245,10 +221,10 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </div>
-            <Typography 
+            <Typography
               id="new-post-modal-title"
-              variant="title" 
-              weight="bold" 
+              variant="title"
+              weight="bold"
               className="blog-modal-title new-post-modal-title dashboard-heading-text"
               style={{ color: theme.colors.text }}
             >
@@ -296,11 +272,11 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
         }}>
           {error && (
             <div className="blog-form-error-message new-post-error-display" role="alert" aria-live="polite">
-              <div className="blog-form-error-content" style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: theme.spacing.sm, 
-                color: theme.colors.error, 
+              <div className="blog-form-error-content" style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: theme.spacing.sm,
+                color: theme.colors.error,
                 marginBottom: theme.spacing.md,
                 padding: theme.spacing.md,
                 backgroundColor: `${theme.colors.error}10`,
@@ -320,14 +296,14 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
             flexDirection: 'column',
             gap: '0'
           }}>
-            
+
             {/* Post Title */}
             <div style={{ marginBottom: '20px' }}>
-              <Typography 
-                variant="body1" 
-                style={{ 
-                  marginBottom: theme.spacing.sm, 
-                  display: 'block', 
+              <Typography
+                variant="body1"
+                style={{
+                  marginBottom: theme.spacing.sm,
+                  display: 'block',
                   fontWeight: '500',
                   color: theme.colors.text
                 }}
@@ -335,9 +311,9 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                 Post Title *
               </Typography>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <div style={{ 
-                  position: 'absolute', 
-                  left: theme.spacing.md, 
+                <div style={{
+                  position: 'absolute',
+                  left: theme.spacing.md,
                   color: focusedField === 'title' ? theme.colors.primary : theme.colors.secondary,
                   transition: 'color 0.2s ease'
                 }}>
@@ -361,11 +337,11 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
 
             {/* Field / Context */}
             <div style={{ marginBottom: '20px' }}>
-              <Typography 
-                variant="body1" 
-                style={{ 
-                  marginBottom: theme.spacing.sm, 
-                  display: 'block', 
+              <Typography
+                variant="body1"
+                style={{
+                  marginBottom: theme.spacing.sm,
+                  display: 'block',
                   fontWeight: '500',
                   color: theme.colors.text
                 }}
@@ -373,9 +349,9 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                 Field / Context (Optional)
               </Typography>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <div style={{ 
-                  position: 'absolute', 
-                  left: theme.spacing.md, 
+                <div style={{
+                  position: 'absolute',
+                  left: theme.spacing.md,
                   color: focusedField === 'fieldContext' ? theme.colors.primary : theme.colors.secondary,
                   transition: 'color 0.2s ease',
                   zIndex: 1
@@ -407,11 +383,11 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
 
             {/* Content */}
             <div style={{ marginBottom: '20px' }}>
-              <Typography 
-                variant="body1" 
-                style={{ 
-                  marginBottom: theme.spacing.sm, 
-                  display: 'block', 
+              <Typography
+                variant="body1"
+                style={{
+                  marginBottom: theme.spacing.sm,
+                  display: 'block',
                   fontWeight: '500',
                   color: theme.colors.text
                 }}
@@ -419,10 +395,10 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                 Content *
               </Typography>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start' }}>
-                <div style={{ 
-                  position: 'absolute', 
-                  top: theme.spacing.md, 
-                  left: theme.spacing.md, 
+                <div style={{
+                  position: 'absolute',
+                  top: theme.spacing.md,
+                  left: theme.spacing.md,
                   color: focusedField === 'content' ? theme.colors.primary : theme.colors.secondary,
                   transition: 'color 0.2s ease'
                 }}>
@@ -431,6 +407,7 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                   </svg>
                 </div>
                 <textarea
+                  aria-label="Post Content"
                   placeholder="Write your story here..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -445,11 +422,11 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
 
             {/* Tags */}
             <div style={{ marginBottom: '20px' }}>
-              <Typography 
-                variant="body1" 
-                style={{ 
-                  marginBottom: theme.spacing.sm, 
-                  display: 'block', 
+              <Typography
+                variant="body1"
+                style={{
+                  marginBottom: theme.spacing.sm,
+                  display: 'block',
                   fontWeight: '500',
                   color: theme.colors.text
                 }}
@@ -457,9 +434,9 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                 Tags (Optional)
               </Typography>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <div style={{ 
-                  position: 'absolute', 
-                  left: theme.spacing.md, 
+                <div style={{
+                  position: 'absolute',
+                  left: theme.spacing.md,
                   color: focusedField === 'tags' ? theme.colors.primary : theme.colors.secondary,
                   transition: 'color 0.2s ease'
                 }}>
@@ -477,11 +454,11 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                   style={getInputStyle('tags')}
                 />
               </div>
-              <Typography 
-                variant="caption" 
-                style={{ 
-                  marginTop: theme.spacing.xs, 
-                  fontSize: '12px', 
+              <Typography
+                variant="caption"
+                style={{
+                  marginTop: theme.spacing.xs,
+                  fontSize: '12px',
                   color: theme.colors.textLight,
                   display: 'block'
                 }}
@@ -490,13 +467,31 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
               </Typography>
             </div>
 
+            <div style={{ display: 'flex', gap: theme.spacing.xs, flexWrap: 'wrap', marginTop: theme.spacing.sm }}>
+              {tags
+                .split(',')
+                .map((tag) => tag.trim())
+                .filter(Boolean)
+                .map((tag, i) => (
+                  <span key={i} style={{
+                    padding: '4px 8px',
+                    fontSize: '12px',
+                    backgroundColor: theme.colors.primary + '15',
+                    color: theme.colors.primary,
+                    borderRadius: theme.borderRadius.sm
+                  }}>
+                    {tag}
+                  </span>
+                ))}
+            </div>
+
             {/* Image URL */}
             <div style={{ marginBottom: '20px' }}>
-              <Typography 
-                variant="body1" 
-                style={{ 
-                  marginBottom: theme.spacing.sm, 
-                  display: 'block', 
+              <Typography
+                variant="body1"
+                style={{
+                  marginBottom: theme.spacing.sm,
+                  display: 'block',
                   fontWeight: '500',
                   color: theme.colors.text
                 }}
@@ -504,9 +499,9 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                 Featured Image URL (Optional)
               </Typography>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <div style={{ 
-                  position: 'absolute', 
-                  left: theme.spacing.md, 
+                <div style={{
+                  position: 'absolute',
+                  left: theme.spacing.md,
                   color: focusedField === 'imageUrl' ? theme.colors.primary : theme.colors.secondary,
                   transition: 'color 0.2s ease'
                 }}>
@@ -524,101 +519,114 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                   style={getInputStyle('imageUrl')}
                 />
               </div>
-            </div>
-          </form>
-        </main>
-
-        <footer style={{
-          padding: `${theme.spacing.md} ${theme.spacing.xl} ${theme.spacing.lg} ${theme.spacing.xl}`,
-          borderTop: `1px solid ${theme.colors.borderLight}`,
-          backgroundColor: theme.colors.background
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: theme.spacing.md
-          }}>
-            <Button 
-              type="button" 
-              variant="secondary" 
-              onClick={onClose} 
-              disabled={loading}
-              style={{
-                minWidth: '100px',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              loading={loading}
-              disabled={loading}
-              onClick={handleSubmit}
-              className="blog-button-primary-action new-post-submit-btn"
-              style={{
-                minWidth: '140px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: theme.spacing.sm,
-                fontSize: '14px',
-                borderRadius: theme.borderRadius.md,
-                transition: 'all 0.2s ease',
-                whiteSpace: 'nowrap',
-                flexWrap: 'nowrap'
-              }}
-            >
-              {loading ? (
-                <span style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: theme.spacing.sm,
-                  whiteSpace: 'nowrap'
-                }}>
-                  <div style={{
-                    width: '16px',
-                    height: '16px',
-                    border: '2px solid transparent',
-                    borderTop: '2px solid currentColor',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite',
-                    flexShrink: 0
-                  }}></div>
-                  Publishing...
-                </span>
-              ) : (
-                <span style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: theme.spacing.sm,
-                  whiteSpace: 'nowrap'
-                }}>
-                  Publish Post
-                  <svg
-                    className="new-post-submit-icon"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    style={{
-                      ...iconStyle,
-                      flexShrink: 0
-                    }}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                    />
-                  </svg>
-                </span>
+              {imageUrl && (
+                <img
+                  src={imageUrl}
+                  alt="Featured preview"
+                  style={{
+                    marginTop: theme.spacing.sm,
+                    maxWidth: '100%',
+                    borderRadius: theme.borderRadius.sm,
+                    border: `1px solid ${theme.colors.borderLight}`
+                  }}
+                  onError={() => setImageUrl('')}
+                />
               )}
-            </Button>
           </div>
-        </footer>
-      </div>
+        </form>
+      </main>
+
+      <footer style={{
+        padding: `${theme.spacing.md} ${theme.spacing.xl} ${theme.spacing.lg} ${theme.spacing.xl}`,
+        borderTop: `1px solid ${theme.colors.borderLight}`,
+        backgroundColor: theme.colors.background
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: theme.spacing.md
+        }}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onClose}
+            disabled={loading}
+            style={{
+              minWidth: '100px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            loading={loading}
+            disabled={loading}
+            onClick={handleSubmit}
+            className="blog-button-primary-action new-post-submit-btn"
+            style={{
+              minWidth: '140px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: theme.spacing.sm,
+              fontSize: '14px',
+              borderRadius: theme.borderRadius.md,
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap',
+              flexWrap: 'nowrap'
+            }}
+          >
+            {loading ? (
+              <span style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: theme.spacing.sm,
+                whiteSpace: 'nowrap'
+              }}>
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid transparent',
+                  borderTop: '2px solid currentColor',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  flexShrink: 0
+                }}></div>
+                Publishing...
+              </span>
+            ) : (
+              <span style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: theme.spacing.sm,
+                whiteSpace: 'nowrap'
+              }}>
+                Publish Post
+                <svg
+                  className="new-post-submit-icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  style={{
+                    ...iconStyle,
+                    flexShrink: 0
+                  }}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                  />
+                </svg>
+              </span>
+            )}
+          </Button>
+        </div>
+      </footer>
     </div>
+    </div >
   );
 }

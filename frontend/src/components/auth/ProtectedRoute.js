@@ -1,15 +1,13 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { isAuthenticated } from '../../utils/auth';
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute() {
   const location = useLocation();
-  
-  if (!isAuthenticated()) {
-    // Redirect to signin with the current location so we can redirect back after login
-    return <Navigate to="/signin" state={{ from: location }} replace />;
-  }
-  
-  return children;
+  return isAuthenticated() ? (
+    <Outlet />
+  ) : (
+    <Navigate to="/signin" state={{ from: location }} replace />
+  );
 }
 
 export default ProtectedRoute;
