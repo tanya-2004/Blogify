@@ -1,16 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/authMiddleware');
+const { authenticate } = require('../middleware/authMiddleware');
+const { likePost } = require('../controllers/postController');
+
 const {
   getAllPosts,
   getPostById,
   createPost,
-  updatePost,
+  updatePost, 
   deletePost,
   getMyPosts
 } = require('../controllers/postController');
 
-router.get('/test-auth', auth, (req, res) => {
+router.get('/test-auth', authenticate, (req, res) => {
   res.json({
     msg: 'Authentication successful',
     userId: req.user,
@@ -20,12 +22,13 @@ router.get('/test-auth', auth, (req, res) => {
 
 // 🟢 Public Routes
 router.get('/', getAllPosts);
-router.get('/:id', getPostById);
 
-// 🔐 Protected Routes
-router.get('/mine', auth, getMyPosts);
-router.post('/', auth, createPost);
-router.put('/:id', auth, updatePost);
-router.delete('/:id', auth, deletePost);
+// 🔐 Protected Routes (place /mine BEFORE /:id)
+router.get('/mine', authenticate, getMyPosts);
+router.get('/:id', getPostById);
+router.post('/', authenticate, createPost);
+router.put('/:id', authenticate, updatePost);
+router.delete('/:id', authenticate, deletePost);
+router.post('/:id/like', authenticate, likePost);
 
 module.exports = router;

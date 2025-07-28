@@ -3,19 +3,25 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
+const authRoutes = require('./routes/auth');
+
 const app = express();
 
-// CORS configuration for production
+// 🛡️ CORS configuration
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests from localhost, 127.0.0.1, Vercel URLs, or undefined (for curl/devtools/preflight)
-    if (!origin || 
-        origin.startsWith('http://localhost') || 
-        origin.startsWith('http://127.0.0.1') || 
-        origin.endsWith('.vercel.app')) {
+    const allowedOrigins = [
+      'http://localhost',
+      'http://127.0.0.1'
+    ];
+    if (
+      !origin ||
+      allowedOrigins.some(base => origin.startsWith(base)) ||
+      origin.endsWith('.vercel.app')
+    ) {
       callback(null, true);
     } else {
-      console.log('❌ CORS not allowed for origin:', origin);
+      console.warn('❌ CORS not allowed for origin:', origin);
       callback(new Error('CORS not allowed for this origin'));
     }
   },
@@ -24,16 +30,19 @@ app.use(cors({
 
 app.use(express.json());
 
-const PORT = process.env.PORT || 5000;
+// 🔍 Global input sanitizer
+const sanitizeBody = require('./middleware/sanitizeBody');
+app.use(sanitizeBody);
 
-// Connect MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error(err));
+// 🌱 MongoDB connection
+mongoose.connect(process.env.MONGO_URI?.trim())
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch((err) => console.error('❌ MongoDB connection failed:', err.message));
 
-// Routes
-app.use('/api/auth', require('./routes/auth'));
+// 🚏 Route mounting
+app.use('/api/auth', authRoutes);
 app.use('/api/posts', require('./routes/posts'));
 app.use('/api/comments', require('./routes/comments'));
 
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+const PORT = process.env.PORT?.trim() || 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

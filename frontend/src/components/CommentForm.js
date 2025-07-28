@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from '../utils/axios';
-import { Button, Typography } from './ui';
+import { Button, Typography, Input } from './ui';
+import { showSuccess, showError } from '../utils/toast';
 
 const CommentForm = ({ postId }) => {
   const [author, setAuthor] = useState('');
@@ -14,6 +15,7 @@ const CommentForm = ({ postId }) => {
     setSuccess(false);
 
     if (!author.trim() || !content.trim() || !postId) {
+      showError('All fields are required');
       setError('All fields are required');
       return;
     }
@@ -24,11 +26,14 @@ const CommentForm = ({ postId }) => {
         content: content.trim(),
         post: postId
       });
-      setSuccess(true);
+
+      showSuccess('Comment submitted successfully!');
       setAuthor('');
       setContent('');
+      setSuccess(true);
     } catch (err) {
       console.error('Comment submission failed:', err);
+      showError('Failed to submit comment');
       setError('Failed to submit comment');
     }
   };
@@ -36,25 +41,37 @@ const CommentForm = ({ postId }) => {
   return (
     <div className="bg-white p-6 rounded-xl shadow-md">
       <Typography variant="h3" className="mb-4">Leave a Comment</Typography>
-      {success && <p className="text-green-600 mb-4">Comment submitted successfully!</p>}
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+
+      {/* Inline fallback for accessibility or screen readers */}
+      {success && (
+        <p className="text-green-600 mb-4" role="alert">
+          Comment submitted successfully!
+        </p>
+      )}
+      {error && (
+        <p className="text-red-500 mb-4" role="alert">
+          {error}
+        </p>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          placeholder="Your name"
+        <Input
+          label="Your name"
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
           required
-          className="w-full border rounded px-4 py-2"
         />
-        <textarea
-          placeholder="Your comment"
+        <Input
+          as="textarea"
+          label="Your comment"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           required
-          className="w-full border rounded px-4 py-2 h-24"
+          rows={4}
         />
-        <Button type="submit" variant="primary">Submit</Button>
+        <Button type="submit" variant="primary">
+          Submit
+        </Button>
       </form>
     </div>
   );

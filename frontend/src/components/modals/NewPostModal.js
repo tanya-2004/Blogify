@@ -3,6 +3,7 @@ import API from '../../utils/axios';
 import Button from '../ui/Button';
 import Typography from '../ui/Typography';
 import { isAuthenticated, debugAuthStatus } from '../../utils/auth';
+import { showError, showSuccess } from '../../utils/toast';
 
 export default function NewPostModal({ open, onClose, onPostCreated }) {
   const [title, setTitle] = useState('');
@@ -11,7 +12,6 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
   const [imageUrl, setImageUrl] = useState('');
   const [fieldContext, setFieldContext] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [focusedField, setFocusedField] = useState(null);
   const titleInputRef = useRef(null);
 
@@ -34,21 +34,20 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
     e.preventDefault();
 
     if (!isAuthenticated()) {
-      setError('You must be logged in to create a post. Please log in and try again.');
+      showError('You must be logged in to create a post.');
       return;
     }
 
-    if (imageUrl && imageUrl.trim()) {
+    if (imageUrl.trim()) {
       try {
         new URL(imageUrl.trim());
       } catch {
-        setError('Please enter a valid image URL (e.g., https://example.com/image.jpg)');
+        showError('Please enter a valid image URL.');
         return;
       }
     }
 
     setLoading(true);
-    setError('');
 
     try {
       const postData = {
@@ -67,22 +66,24 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
       setTags('');
       setImageUrl('');
       setFieldContext('');
-      onPostCreated();
-      onClose();
+
+      showSuccess('Post created successfully!');
+      onPostCreated?.();
+      onClose?.();
     } catch (err) {
       const status = err.response?.status;
+
       if (status === 401) {
-        setError('Authentication failed. Please log in again.');
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
+        showError('Authentication failed. Redirecting...');
+        setTimeout(() => (window.location.href = '/login'), 2000);
       } else {
-        setError(err.response?.data?.msg || err.response?.data?.error || 'Failed to create post. Please try again.');
+        showError(err.response?.data?.msg || err.response?.data?.error || 'Failed to create post. Please try again.');
       }
     } finally {
       setLoading(false);
     }
   };
+
 
   if (!open) return null;
 
@@ -270,26 +271,6 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
           maxHeight: '60vh',
           overflowY: 'auto'
         }}>
-          {error && (
-            <div className="blog-form-error-message new-post-error-display" role="alert" aria-live="polite">
-              <div className="blog-form-error-content" style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: theme.spacing.sm,
-                color: theme.colors.error,
-                marginBottom: theme.spacing.md,
-                padding: theme.spacing.md,
-                backgroundColor: `${theme.colors.error}10`,
-                borderRadius: theme.borderRadius.md,
-                border: `1px solid ${theme.colors.error}30`
-              }}>
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span style={{ fontSize: '14px', fontWeight: '500' }}>{error}</span>
-              </div>
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="blog-post-creation-form new-post-form" style={{
             display: 'flex',
@@ -532,101 +513,101 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                   onError={() => setImageUrl('')}
                 />
               )}
-          </div>
-        </form>
-      </main>
+            </div>
+          </form>
+        </main>
 
-      <footer style={{
-        padding: `${theme.spacing.md} ${theme.spacing.xl} ${theme.spacing.lg} ${theme.spacing.xl}`,
-        borderTop: `1px solid ${theme.colors.borderLight}`,
-        backgroundColor: theme.colors.background
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: theme.spacing.md
+        <footer style={{
+          padding: `${theme.spacing.md} ${theme.spacing.xl} ${theme.spacing.lg} ${theme.spacing.xl}`,
+          borderTop: `1px solid ${theme.colors.borderLight}`,
+          backgroundColor: theme.colors.background
         }}>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-            disabled={loading}
-            style={{
-              minWidth: '100px',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            loading={loading}
-            disabled={loading}
-            onClick={handleSubmit}
-            className="blog-button-primary-action new-post-submit-btn"
-            style={{
-              minWidth: '140px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: theme.spacing.sm,
-              fontSize: '14px',
-              borderRadius: theme.borderRadius.md,
-              transition: 'all 0.2s ease',
-              whiteSpace: 'nowrap',
-              flexWrap: 'nowrap'
-            }}
-          >
-            {loading ? (
-              <span style={{
-                display: 'flex',
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: theme.spacing.md
+          }}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onClose}
+              disabled={loading}
+              style={{
+                minWidth: '100px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              loading={loading}
+              disabled={loading}
+              onClick={handleSubmit}
+              className="blog-button-primary-action new-post-submit-btn"
+              style={{
+                minWidth: '140px',
+                display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: theme.spacing.sm,
-                whiteSpace: 'nowrap'
-              }}>
-                <div style={{
-                  width: '16px',
-                  height: '16px',
-                  border: '2px solid transparent',
-                  borderTop: '2px solid currentColor',
-                  borderRadius: '50%',
-                  animation: 'spin 1s linear infinite',
-                  flexShrink: 0
-                }}></div>
-                Publishing...
-              </span>
-            ) : (
-              <span style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: theme.spacing.sm,
-                whiteSpace: 'nowrap'
-              }}>
-                Publish Post
-                <svg
-                  className="new-post-submit-icon"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  style={{
-                    ...iconStyle,
+                fontSize: '14px',
+                borderRadius: theme.borderRadius.md,
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+                flexWrap: 'nowrap'
+              }}
+            >
+              {loading ? (
+                <span style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: theme.spacing.sm,
+                  whiteSpace: 'nowrap'
+                }}>
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
+                    border: '2px solid transparent',
+                    borderTop: '2px solid currentColor',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
                     flexShrink: 0
-                  }}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                  />
-                </svg>
-              </span>
-            )}
-          </Button>
-        </div>
-      </footer>
-    </div>
+                  }}></div>
+                  Publishing...
+                </span>
+              ) : (
+                <span style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: theme.spacing.sm,
+                  whiteSpace: 'nowrap'
+                }}>
+                  Publish Post
+                  <svg
+                    className="new-post-submit-icon"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    style={{
+                      ...iconStyle,
+                      flexShrink: 0
+                    }}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    />
+                  </svg>
+                </span>
+              )}
+            </Button>
+          </div>
+        </footer>
+      </div>
     </div >
   );
 }

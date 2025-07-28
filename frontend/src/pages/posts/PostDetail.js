@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -9,6 +9,8 @@ import {
 import API from '../../utils/axios';
 import { isAuthenticated } from '../../utils/auth';
 import CommentForm from '../../components/CommentForm';
+import { ThemeContext } from '../../contexts/ThemeContext';
+import { showSuccess, showError } from '../../utils/toast';
 
 function PostDetail() {
   const { id } = useParams();
@@ -16,6 +18,10 @@ function PostDetail() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+
+  const { primaryColor, fontSize } = useContext(ThemeContext);
+  const themedStyle = { color: primaryColor };
+  const themedSize = fontSize === 'large' ? 'text-lg' : fontSize === 'small' ? 'text-sm' : '';
 
   useEffect(() => {
     API.get(`/posts/${id}`)
@@ -34,9 +40,10 @@ function PostDetail() {
     setDeleting(true);
     try {
       await API.delete(`/posts/${post._id}`);
+      showSuccess('Post deleted');
       navigate('/dashboard');
     } catch (err) {
-      alert(err.response?.data?.msg || 'Delete failed');
+      showError(err.response?.data?.msg || 'Delete failed');
       setDeleting(false);
     }
   };
@@ -55,8 +62,10 @@ function PostDetail() {
     return (
       <div className="dashboard-container">
         <div className="text-center py-32">
-          <Typography variant="h2" className="mb-6">Post Not Found</Typography>
-          <Typography variant="body1" className="text-text-secondary mb-12 max-w-lg mx-auto">
+          <Typography variant="h2" style={themedStyle} className={`mb-6 ${themedSize}`}>
+            Post Not Found
+          </Typography>
+          <Typography variant="body1" className={`text-text-secondary mb-12 max-w-lg mx-auto ${themedSize}`}>
             The post you're looking for doesn't exist or has been removed.
           </Typography>
           <Button variant="primary" onClick={() => navigate('/')}>
@@ -86,10 +95,13 @@ function PostDetail() {
             <Typography variant="h1" className="text-white mb-4 leading-tight">
               {post.title}
             </Typography>
-            <div className="flex items-center gap-6 text-white/80 text-sm">
+            <div className="flex flex-wrap items-center gap-6 text-white/80 text-sm">
               <span>{post.author?.username || 'Unknown Author'}</span>
               <span>{new Date(post.createdAt).toLocaleDateString()}</span>
               <span>{Math.floor(post.content.length / 200)} min read</span>
+              {typeof post.commentsCount === 'number' && (
+                <span>💬 {post.commentsCount} Comment{post.commentsCount !== 1 ? 's' : ''}</span>
+              )}
             </div>
           </div>
         </div>
@@ -99,7 +111,8 @@ function PostDetail() {
           <div className="prose prose-lg max-w-none mb-8">
             <Typography
               variant="body1"
-              className="text-text-primary leading-relaxed whitespace-pre-wrap"
+              style={themedStyle}
+              className={`text-text-primary leading-relaxed whitespace-pre-wrap ${themedSize}`}
               aria-label="Post content"
             >
               {post.content}
@@ -109,10 +122,15 @@ function PostDetail() {
           {/* Tags */}
           {post.tags?.filter(Boolean).length > 0 && (
             <div className="mb-12 pt-8 border-t border-border-color">
-              <Typography variant="h3" className="mb-4">Tags</Typography>
+              <Typography variant="h3" style={themedStyle} className={`mb-4 ${themedSize}`}>
+                Tags
+              </Typography>
               <div className="flex flex-wrap gap-3">
                 {post.tags.map((tag, i) => (
-                  <span key={i} className="bg-surface-secondary border border-border-color text-accent-primary px-4 py-2 rounded-full text-sm font-medium">
+                  <span
+                    key={i}
+                    className="bg-surface-secondary border border-border-color text-accent-primary px-4 py-2 rounded-full text-sm font-medium"
+                  >
                     #{tag}
                   </span>
                 ))}

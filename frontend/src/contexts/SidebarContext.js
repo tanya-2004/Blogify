@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
 const SidebarContext = createContext();
@@ -15,19 +15,19 @@ export const SidebarProvider = ({ children }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const toggleSidebar = () => {
+  const toggleSidebar = useCallback(() => {
     console.log('toggleSidebar called, current isCollapsed:', isCollapsed);
     setIsCollapsed(prev => !prev);
-  };
+  }, [isCollapsed]);
 
-  const toggleMobileSidebar = () => {
+  const toggleMobileSidebar = useCallback(() => {
     console.log('toggleMobileSidebar called, current isMobileOpen:', isMobileOpen);
     setIsMobileOpen(prev => !prev);
-  };
+  }, [isMobileOpen]);
 
-  const closeMobileSidebar = () => {
+  const closeMobileSidebar = useCallback(() => {
     setIsMobileOpen(false);
-  };
+  }, []);
 
   const value = useMemo(() => ({
     isCollapsed,
@@ -35,7 +35,7 @@ export const SidebarProvider = ({ children }) => {
     toggleSidebar,
     toggleMobileSidebar,
     closeMobileSidebar
-  }), [isCollapsed, isMobileOpen]);
+  }), [isCollapsed, isMobileOpen, toggleSidebar, toggleMobileSidebar, closeMobileSidebar]);
 
   return (
     <SidebarContext.Provider value={value} data-testid="sidebar-provider">

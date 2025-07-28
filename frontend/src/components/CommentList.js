@@ -1,7 +1,16 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import CommentCard from './CommentCard';
 
-export const CommentList = ({ comments, handlers }) => {
+export const CommentList = ({ comments = [], handlers = {} }) => {
+  const {
+    handleApprove,
+    handleReject,
+    handleDelete,
+    handleReply,
+    refreshComments 
+  } = handlers;
+
   return (
     <section className="space-y-6">
       {comments.length === 0 ? (
@@ -11,9 +20,28 @@ export const CommentList = ({ comments, handlers }) => {
         </div>
       ) : (
         comments.map(c => (
-          <CommentCard key={c.id} comment={c} {...handlers} />
+          <CommentCard
+            key={c._id}
+            comment={c}
+            handleApprove={handleApprove}
+            handleReject={handleReject}
+            handleDelete={handleDelete}
+            handleReply={handleReply}               
+            onChange={refreshComments}              
+          />
         ))
       )}
     </section>
   );
+};
+
+CommentList.propTypes = {
+  comments: PropTypes.array.isRequired,
+  handlers: PropTypes.shape({
+    handleApprove: PropTypes.func,
+    handleReject: PropTypes.func,
+    handleDelete: PropTypes.func,
+    handleReply: PropTypes.func,
+    refreshComments: PropTypes.func
+  })
 };

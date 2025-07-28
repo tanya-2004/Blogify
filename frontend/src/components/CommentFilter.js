@@ -1,5 +1,6 @@
 import React from 'react';
-import Button from './ui/Button';
+import PropTypes from 'prop-types';
+import { Button } from './ui';
 
 export const CommentFilter = ({ filter, setFilter }) => {
   const filters = ['all', 'pending', 'approved', 'spam'];
@@ -17,4 +18,9 @@ export const CommentFilter = ({ filter, setFilter }) => {
       ))}
     </div>
   );
+};
+
+CommentFilter.propTypes = {
+  filter: PropTypes.string.isRequired,
+  setFilter: PropTypes.func.isRequired
 };
