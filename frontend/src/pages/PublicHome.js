@@ -1,13 +1,33 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../utils/axios';
-import { BlogCard } from '../components';
+import { BlogCard, Typography } from '../components';
 import { isAuthenticated } from '../utils/auth';
+import { ThemeContext } from '../contexts/ThemeContext';
+import { showSuccess, showError } from '../utils/toast';
 
 function PublicHome() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const isAuth = isAuthenticated();
+  const { primaryColor, fontSize } = useContext(ThemeContext);
+
+  const themedStyle = { color: primaryColor };
+  const themedSize = fontSize === 'large' ? 'text-lg' : fontSize === 'small' ? 'text-sm' : '';
+
+  const handleLike = async (postId) => {
+    try {
+      await API.post(`/posts/${postId}/like`);
+      showSuccess('Thanks for the like!');
+      const res = await API.get('/posts');
+      const postsData = Array.isArray(res.data) ? res.data : [];
+      const sortedPosts = postsData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setPosts(sortedPosts);
+    } catch (err) {
+      console.error('Like failed:', err);
+      showError('Failed to register like. Please try again.');
+    }
+  };
 
   useEffect(() => {
     API.get('/posts')
@@ -19,7 +39,8 @@ function PublicHome() {
       })
       .catch((err) => {
         console.error('Fetch failed:', err);
-        setPosts([]); // Set to empty array on error
+        showError('Failed to load posts. Please refresh.');
+        setPosts([]);
         setLoading(false);
       });
   }, []);
@@ -102,19 +123,27 @@ function PublicHome() {
 
         <div className="relative z-10 max-w-5xl mx-auto text-center">
           <div className="mb-8">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-light text-white mb-4 leading-tight animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
+            <Typography
+              variant="hero"
+              weight="light"
+              className={`text-white mb-4 leading-tight animate-fadeInUp ${themedSize}`}
+              style={themedStyle}
+            >
               Craft<br />
               <span className="font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">
                 Stories
               </span><br />
               <span className="text-white/80">That Matter</span>
-            </h1>
+            </Typography>
           </div>
-
-          <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto font-light leading-relaxed animate-fadeInUp" style={{ animationDelay: '0.8s' }}>
+          <Typography
+            variant="body1"
+            className={`text-gray-300 mb-8 max-w-2xl mx-auto font-light leading-relaxed animate-fadeInUp ${themedSize}`}
+            style={themedStyle}
+          >
             Where visionary thoughts meet exceptional design.
-            <span className="text-blue-400">Create, share, and inspire</span> with our premium publishing platform.
-          </p>
+            <span className="text-blue-400"> Create, share, and inspire </span> with our premium publishing platform.
+          </Typography>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fadeInUp" style={{ animationDelay: '1s' }}>
@@ -159,15 +188,24 @@ function PublicHome() {
               <div className="w-8 h-px bg-gray-300"></div>
             </div>
 
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-light text-gray-900 mb-6 leading-tight">
+            <Typography
+              variant="h2"
+              weight="light"
+              style={themedStyle}
+              className={`mb-6 leading-tight ${themedSize}`}
+            >
               Latest
               <span className="block font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
                 Insights
               </span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light leading-relaxed">
+            </Typography>
+
+            <Typography
+              variant="body1"
+              className={`text-gray-600 max-w-3xl mx-auto font-light leading-relaxed ${themedSize}`}
+            >
               Discover extraordinary perspectives from our community of thought leaders and creative minds.
-            </p>
+            </Typography>
           </div>
 
           {loading ? (
@@ -189,10 +227,15 @@ function PublicHome() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-3xl font-light text-gray-900 mb-6">The Canvas Awaits</h3>
-              <p className="text-xl text-gray-600 mb-12 max-w-lg mx-auto font-light leading-relaxed">
+              <Typography variant="h3" weight="light" style={themedStyle} className={`mb-6 ${themedSize}`}>
+                The Canvas Awaits
+              </Typography>
+              <Typography
+                variant="body1"
+                className={`text-xl text-gray-600 mb-12 max-w-lg mx-auto font-light leading-relaxed ${themedSize}`}
+              >
                 Be the visionary who paints the first stroke. Share your unique perspective with the world.
-              </p>
+              </Typography>
               {isAuth ? (
                 <Link
                   to="/create"
@@ -220,7 +263,7 @@ function PublicHome() {
                     animationFillMode: 'forwards'
                   }}
                 >
-                  <BlogCard post={post} />
+                  <BlogCard post={post} onLike={() => handleLike(post._id)} />
                 </div>
               ))}
             </div>

@@ -6,7 +6,11 @@ function ProtectedRoute() {
   return isAuthenticated() ? (
     <Outlet />
   ) : (
-    <Navigate to="/signin" state={{ from: location }} replace />
+    <Navigate
+      to="/signin"
+      state={{ from: location, reason: 'auth-required' }}
+      replace
+    />
   );
 }
 

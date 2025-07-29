@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, Button, Typography, Input, LoadingSpinner } from '../../components';
 import API from '../../utils/axios';
+import { showSuccess, showError } from '../../utils/toast';
 
 function EditPost() {
   const { id } = useParams();
@@ -34,16 +35,21 @@ function EditPost() {
     e.preventDefault();
     setIsSubmitting(true);
 
+    const updatedPost = {
+      title: title.trim(),
+      content: content.trim(),
+      tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      imageUrl: imageUrl.trim()
+    };
+
     try {
-      await API.put(`/posts/${id}`, {
-        title,
-        content,
-        tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
-        imageUrl,
-      });
+      await API.put(`/posts/${id}`, updatedPost);
+      showSuccess('Post updated!');
       navigate(`/post/${id}`);
     } catch (err) {
-      alert(err.response?.data?.msg || 'Update failed');
+      const msg = err.response?.data?.msg || 'Update failed';
+      showError(msg);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -101,7 +107,7 @@ function EditPost() {
             {imageUrl && (
               <img
                 src={imageUrl}
-                alt="Featured preview"
+                alt={`Featured visual for "${title.trim()}"`}
                 style={{
                   marginTop: '0.5rem',
                   maxWidth: '100%',

@@ -1,33 +1,46 @@
 import axios from 'axios';
+import { showError } from './toast';
+import { getToken, removeToken } from './auth';
 
 const API = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
 });
 
-// Attach token automatically
+// 🛠 Public API export for updating settings
+export const updateUserSettings = (data) => API.patch('/auth/settings', data);
+
+// 🔐 Request interceptor: attach token and log
 API.interceptors.request.use((req) => {
-  const token = localStorage.getItem('token');
-  console.log('API Request - Token found:', token ? 'Yes' : 'No');
+  const token = getToken();
+  const method = req.method?.toUpperCase();
+  const url = req.url;
+
+  console.log(`[API] → ${method} ${url}`);
+  console.log('Token present:', !!token);
+
   if (token) {
     req.headers.Authorization = `Bearer ${token}`;
-    console.log('API Request - Authorization header set');
-  } else {
-    console.log('API Request - No token found in localStorage');
+    console.log('Authorization header set');
   }
+
   return req;
 });
 
-// Handle response errors
+// ⚠️ Response interceptor: handle global errors
 API.interceptors.response.use(
-  (response) => response,
+  (res) => res,
   (error) => {
-    console.log('API Response Error:', error.response?.data);
-    if (error.response?.status === 401) {
-      console.log('Unauthorized - clearing token and redirecting to login');
-      localStorage.removeItem('token');
-      // You might want to redirect to login page here
-      window.location.href = '/login';
+    const status = error.response?.status;
+    const data = error.response?.data;
+
+    console.error('[API Error]', status, data);
+
+    if (status === 401) {
+      showError('Session expired. Please sign in again.');
+      removeToken();
+      window.location.href = '/signin';
     }
+
     return Promise.reject(error);
   }
 );

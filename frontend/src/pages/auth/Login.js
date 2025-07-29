@@ -1,36 +1,49 @@
 import { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useUser } from '../../contexts/UserContext';
 import API from '../../utils/axios';
 import { setToken } from '../../utils/auth';
+import { showSuccess, showError } from '../../utils/toast';
 import { Card, Typography } from '../../components';
-
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Get the page user was trying to access before login
+  const { loadUser } = useUser(); 
   const from = location.state?.from?.pathname || '/dashboard';
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
+    if (!email.trim() || !password.trim()) {
+      showError('Email and password are required.');
+      return;
+    }
+
     setIsLoading(true);
-    
+
     try {
-      const res = await API.post('/auth/login', { email, password });
-      setToken(res.data.token);
-      navigate(from, { replace: true });
+      const { data, status } = await API.post('/auth/login', { email, password });
+
+      if (status === 200 && data?.token) {
+        setToken(data.token);
+        await loadUser(); 
+        showSuccess('Signed in successfully!');
+        navigate(from, { replace: true });
+      } else {
+        showError('Login failed: no token returned');
+      }
     } catch (err) {
-      setError(
+      const fallbackMsg = 'Login failed. Please check your credentials.';
+      const msg =
         err.response?.data?.msg ||
         err.response?.data?.error ||
-        'Login failed. Please check your credentials.'
-      );
+        fallbackMsg;
+
+      showError(msg);
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +77,7 @@ function Login() {
               </span>
             </div>
           </Link>
-          
+
           <Typography variant="h1" weight="light" className="text-white mb-2">
             Welcome Back
           </Typography>
@@ -76,16 +89,6 @@ function Login() {
         {/* Login Card */}
         <Card className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
           <Card.Body className="p-8">
-            {error && (
-              <div className="mb-6 p-4 bg-red-500/10 border border-red-400/20 rounded-xl" role="alert">
-                <Typography variant="body2" className="text-red-300 flex items-center space-x-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{error}</span>
-                </Typography>
-              </div>
-            )}
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-4">
@@ -144,8 +147,8 @@ function Login() {
                   />
                   Remember me
                 </label>
-                <Link 
-                  to="/forgot-password" 
+                <Link
+                  to="/forgot-password"
                   className="text-blue-400 hover:text-blue-300 transition-colors duration-200 underline decoration-2 underline-offset-4"
                 >
                   Forgot password?
@@ -169,19 +172,19 @@ function Login() {
                   'Sign In'
                 )}
               </button>                <div className="text-center pt-4">
-                  <Typography variant="body2" className="text-blue-200">
-                    Don't have an account?{' '}
-                    <Link 
-                      to="/signup" 
-                      className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200 underline decoration-2 underline-offset-4"
-                    >
-                      Sign up here
-                    </Link>
-                  </Typography>
-                </div>
-              </form>
-            </Card.Body>
-          </Card>
+                <Typography variant="body2" className="text-blue-200">
+                  Don't have an account?{' '}
+                  <Link
+                    to="/signup"
+                    className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200 underline decoration-2 underline-offset-4"
+                  >
+                    Sign up here
+                  </Link>
+                </Typography>
+              </div>
+            </form>
+          </Card.Body>
+        </Card>
 
         {/* Footer */}
         <div className="text-center mt-8">

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Typography, Input, LoadingSpinner } from '../../components';
 import API from '../../utils/axios';
+import { showSuccess, showError } from '../../utils/toast';
 
 function CreatePost() {
   const [title, setTitle] = useState('');
@@ -16,17 +17,19 @@ function CreatePost() {
     setIsSubmitting(true);
 
     const postData = {
-      title,
-      content,
+      title: title.trim(),
+      content: content.trim(),
       tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
-      imageUrl,
+      imageUrl: imageUrl.trim()
     };
 
     try {
       await API.post('/posts', postData);
+      showSuccess('Post published!');
       navigate('/dashboard');
     } catch (err) {
-      alert(err.response?.data?.msg || 'Failed to create post');
+      const msg = err.response?.data?.msg || 'Failed to create post';
+      showError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -76,6 +79,7 @@ function CreatePost() {
               <img
                 src={imageUrl}
                 alt="Featured preview"
+                aria-label="Preview of featured image"
                 style={{
                   marginTop: '0.5rem',
                   maxWidth: '100%',
