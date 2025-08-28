@@ -1,31 +1,51 @@
+const mongoose = require('mongoose');
 const Post = require('../models/Post');
 
+// 🧠 Utility: Validate ObjectId
+const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+// 👤 GET /api/posts/mine
 exports.getMyPosts = async (req, res) => {
+  if (!req.user || !req.user._id) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
+
   try {
     const posts = await Post.find({ author: req.user._id })
       .sort({ createdAt: -1 })
       .select('title content views likes commentsCount imageUrl tags category createdAt')
       .populate('author', 'username')
       .lean();
+
     res.json(posts);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
+// 🌐 GET /api/posts
 exports.getAllPosts = async (req, res) => {
   try {
-    const posts = await Post.find().populate('author', 'username');
+    const posts = await Post.find()
+      .populate('author', 'username')
+      .lean();
+
     res.json(posts);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
+// 🔍 GET /api/posts/:id
 exports.getPostById = async (req, res) => {
+  const { id } = req.params;
+  if (!isValidId(id)) {
+    return res.status(400).json({ error: 'Invalid post ID' });
+  }
+
   try {
     const post = await Post.findByIdAndUpdate(
-      req.params.id,
+      id,
       { $inc: { views: 1 } },
       { new: true }
     ).populate('author', 'username');
@@ -37,11 +57,17 @@ exports.getPostById = async (req, res) => {
   }
 };
 
+// ✍️ POST /api/posts
 exports.createPost = async (req, res) => {
+  if (!req.user || !req.user._id) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
+
   try {
     const title = req.body.title?.trim();
     const content = req.body.content?.trim();
     const imageUrl = req.body.imageUrl?.trim() || '';
+    const category = req.body.category?.trim() || 'general';
     const tags = Array.isArray(req.body.tags)
       ? req.body.tags.map(t => t?.trim()).filter(Boolean)
       : [];
@@ -54,6 +80,7 @@ exports.createPost = async (req, res) => {
       title,
       content,
       imageUrl,
+      category,
       tags,
       author: req.user._id
     });
@@ -65,12 +92,17 @@ exports.createPost = async (req, res) => {
   }
 };
 
+// 🛠 PUT /api/posts/:id
 exports.updatePost = async (req, res) => {
+  const { id } = req.params;
+  if (!isValidId(id)) {
+    return res.status(400).json({ error: 'Invalid post ID' });
+  }
+
   try {
-    const post = await Post.findById(req.params.id);
+    const post = await Post.findById(id);
     if (!post) return res.status(404).json({ error: 'Post not found' });
 
-    // ✅ Fixed ownership check
     if (post.author.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
@@ -79,6 +111,7 @@ exports.updatePost = async (req, res) => {
     if (updateData.title) updateData.title = updateData.title.trim();
     if (updateData.content) updateData.content = updateData.content.trim();
     if (updateData.imageUrl) updateData.imageUrl = updateData.imageUrl.trim();
+    if (updateData.category) updateData.category = updateData.category.trim();
     if (Array.isArray(updateData.tags)) {
       updateData.tags = updateData.tags.map(t => t?.trim()).filter(Boolean);
     }
@@ -91,12 +124,17 @@ exports.updatePost = async (req, res) => {
   }
 };
 
+// 🗑 DELETE /api/posts/:id
 exports.deletePost = async (req, res) => {
+  const { id } = req.params;
+  if (!isValidId(id)) {
+    return res.status(400).json({ error: 'Invalid post ID' });
+  }
+
   try {
-    const post = await Post.findById(req.params.id);
+    const post = await Post.findById(id);
     if (!post) return res.status(404).json({ error: 'Post not found' });
 
-    // ✅ Fixed ownership check
     if (post.author.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
@@ -108,10 +146,16 @@ exports.deletePost = async (req, res) => {
   }
 };
 
+// ❤️ POST /api/posts/:id/like
 exports.likePost = async (req, res) => {
+  const { id } = req.params;
+  if (!isValidId(id)) {
+    return res.status(400).json({ error: 'Invalid post ID' });
+  }
+
   try {
     const post = await Post.findByIdAndUpdate(
-      req.params.id,
+      id,
       { $inc: { likes: 1 } },
       { new: true }
     );

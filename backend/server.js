@@ -4,21 +4,21 @@ const cors = require('cors');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
+const postRoutes = require('./routes/posts');
+const commentRoutes = require('./routes/comments');
+const sanitizeBody = require('./middleware/sanitizeBody');
 
 const app = express();
 
-// 🛡️ CORS configuration
 app.use(cors({
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      'http://localhost',
-      'http://127.0.0.1'
+    const allowed = [
+      'localhost',
+      '.vercel.app',
+      '.github.dev',
+      '.codespaces.github.com'
     ];
-    if (
-      !origin ||
-      allowedOrigins.some(base => origin.startsWith(base)) ||
-      origin.endsWith('.vercel.app')
-    ) {
+    if (!origin || allowed.some(domain => origin.includes(domain))) {
       callback(null, true);
     } else {
       console.warn('❌ CORS not allowed for origin:', origin);
@@ -29,20 +29,24 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
-// 🔍 Global input sanitizer
-const sanitizeBody = require('./middleware/sanitizeBody');
 app.use(sanitizeBody);
 
-// 🌱 MongoDB connection
-mongoose.connect(process.env.MONGO_URI?.trim())
+mongoose.connect(process.env.MONGO_URI?.trim(), {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
   .then(() => console.log('✅ MongoDB connected'))
   .catch((err) => console.error('❌ MongoDB connection failed:', err.message));
 
-// 🚏 Route mounting
 app.use('/api/auth', authRoutes);
-app.use('/api/posts', require('./routes/posts'));
-app.use('/api/comments', require('./routes/comments'));
+app.use('/api/posts', postRoutes);
+app.use('/api/comments', commentRoutes);
+
+app.get('/api/ping', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 const PORT = process.env.PORT?.trim() || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});

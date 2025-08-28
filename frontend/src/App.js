@@ -1,8 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import { ProtectedRoute, Layout } from './components';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { Toaster } from 'react-hot-toast';
+import ErrorBoundary from './components/ErrorBoundary';
+
 import './App.css';
 
 const PublicHome = lazy(() => import('./pages/PublicHome'));
@@ -17,31 +19,26 @@ const Comments = lazy(() => import('./pages/dashboard/Comments'));
 const Theme = lazy(() => import('./pages/dashboard/Theme'));
 const Settings = lazy(() => import('./pages/dashboard/Settings'));
 
-function App() {
+function AppContent() {
+  const { selectedTheme } = useTheme();
+
   return (
-    <ThemeProvider>
-      <Router>
+    <div id="root" className={`${selectedTheme.bg} ${selectedTheme.text} min-h-screen`}>
+      <ErrorBoundary label="Layout">
         <Layout>
           <Toaster
             position="top-right"
             toastOptions={{
               success: {
                 icon: '✅',
-                style: {
-                  background: '#1e3a8a',
-                  color: '#f1f5f9'
-                }
+                style: { background: '#1e3a8a', color: '#f1f5f9' }
               },
               error: {
                 icon: '❌',
-                style: {
-                  background: '#b91c1c',
-                  color: '#fef2f2'
-                }
+                style: { background: '#b91c1c', color: '#fef2f2' }
               }
             }}
           />
-
           <Suspense fallback={<div className="p-8">Loading...</div>}>
             <Routes>
               <Route path="/" element={<PublicHome />} />
@@ -60,6 +57,16 @@ function App() {
             </Routes>
           </Suspense>
         </Layout>
+      </ErrorBoundary>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <Router>
+        <AppContent />
       </Router>
     </ThemeProvider>
   );

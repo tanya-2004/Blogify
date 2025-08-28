@@ -1,17 +1,21 @@
-import { useContext, useState } from 'react';
-import { ThemeContext } from '../../contexts/ThemeContext';
+import { useState } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
 import { NewPostModal, Card, Typography } from '../../components';
 import usePostStats from '../../hooks/usePostStats';
 import { showSuccess } from '../../utils/toast';
 
 export default function Stats() {
   const { posts, stats, refresh } = usePostStats();
-  const { primaryColor, fontSize } = useContext(ThemeContext);
   const [showModal, setShowModal] = useState(false);
+  const { colors, fontSize, mode } = useTheme();
 
-  const themedStyle = { color: primaryColor };
-  const themedSize =
-    fontSize === 'large' ? 'text-lg' : fontSize === 'small' ? 'text-sm' : '';
+  const themedStyle = { color: colors.text };
+  const fontSizeTokens = {
+    small: 'text-sm',
+    medium: '',
+    large: 'text-lg'
+  };
+  const themedSize = fontSizeTokens[fontSize] || '';
 
   const viewsByDay = [0, 0, 0, 0, 0, 0, 0];
   posts.forEach(post => {
@@ -20,8 +24,8 @@ export default function Stats() {
   });
 
   const StatCard = ({ title, value, icon, color, trend }) => (
-    <Card variant="glass" className="bg-white/95 backdrop-blur-sm border-gray-200/50 hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
-      <Card.Body>
+    <Card variant="glass" style={{ borderColor: colors.borderLight }}>
+      <Card.Body className="bg-white/95 backdrop-blur-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
         <div className="flex items-center justify-between mb-4">
           <div className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center shadow-md`}>
             {icon}
@@ -38,7 +42,7 @@ export default function Stats() {
         <Typography variant="title" weight="bold" style={themedStyle} className={`mb-1 ${themedSize}`}>
           {(typeof value === 'number' ? value : 0).toLocaleString()}
         </Typography>
-        <Typography variant="caption" className="text-gray-600">{title}</Typography>
+        <Typography variant="caption" style={{ color: colors.textLight }}>{title}</Typography>
       </Card.Body>
     </Card>
   );
@@ -49,7 +53,7 @@ export default function Stats() {
 
     if (max === 0) {
       return (
-        <div className="text-gray-500 text-sm text-center py-12">
+        <div className="text-sm text-center py-12" style={{ color: colors.textLight }}>
           No views recorded yet this week.
         </div>
       );
@@ -62,12 +66,12 @@ export default function Stats() {
 
           return (
             <div key={index} className="group relative flex flex-col-reverse items-center h-full">
-              <span className="text-xs text-gray-500 mt-2">{labels[index]}</span>
+              <span className="text-xs mt-2" style={{ color: colors.textLight }}>{labels[index]}</span>
               <div
                 className="w-8 rounded-t bg-gradient-to-t from-purple-600 via-purple-500 to-purple-400 transition-[height] duration-700 ease-in-out"
                 style={{ height: `${height}%` }}
               />
-              <div className="text-xs text-gray-400 mt-1">{count}</div>
+              <div className="text-xs mt-1" style={{ color: colors.textLight }}>{count}</div>
               <div className="absolute -top-6 text-xs bg-white border rounded px-2 py-1 shadow opacity-0 group-hover:opacity-100 transition">
                 {count.toLocaleString()} views
               </div>
@@ -89,12 +93,12 @@ export default function Stats() {
         </Typography>
         <div className="space-y-3">
           {posts.slice(0, 5).map(post => (
-            <div key={post._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+            <div key={post._id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 transition" style={{ backgroundColor: colors.background }}>
               <div>
                 <Typography variant="body1" weight="medium" style={themedStyle} className={themedSize}>
                   {post.title}
                 </Typography>
-                <Typography variant="caption" className="text-gray-500">
+                <Typography variant="caption" style={{ color: colors.textLight }}>
                   {new Date(post.createdAt).toLocaleDateString()}
                 </Typography>
               </div>
@@ -102,14 +106,14 @@ export default function Stats() {
                 <Typography variant="body2" weight="semibold" style={themedStyle} className={themedSize}>
                   {post.views || 0} views
                 </Typography>
-                <Typography variant="caption" className="text-gray-500">
+                <Typography variant="caption" style={{ color: colors.textLight }}>
                   {post.likes || 0} likes
                 </Typography>
               </div>
             </div>
           ))}
           {posts.length === 0 && (
-            <Typography variant="body1" className="text-gray-500 text-center py-8">
+            <Typography variant="body1" className="text-center py-8" style={{ color: colors.textLight }}>
               No posts yet. Start writing to see your stats!
             </Typography>
           )}
@@ -120,8 +124,7 @@ export default function Stats() {
 
   return (
     <>
-      <div className="dashboard-container">
-        {/* Header */}
+      <div className="dashboard-container" style={{ backgroundColor: colors.background }} data-theme={mode}>
         <div className="dashboard-header mb-6">
           <Typography variant="h1" weight="bold" style={themedStyle} className={`mb-4 flex items-center space-x-4 ${themedSize}`}>
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -137,7 +140,6 @@ export default function Stats() {
           </Typography>
         </div>
 
-        {/* Stat Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard title="Total Posts" value={stats.totalPosts} icon={<PostIcon />} color="bg-blue-100" trend={12} />
           <StatCard title="Total Views" value={stats.totalViews} icon={<EyeIcon />} color="bg-green-100" trend={25} />
@@ -147,7 +149,6 @@ export default function Stats() {
 
         {/* Chart & Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Actual Views Graph */}
           <Card>
             <Card.Body>
               <Typography variant="h3" style={themedStyle} className={`mb-4 flex items-center space-x-2 ${themedSize}`}>
@@ -160,7 +161,6 @@ export default function Stats() {
             </Card.Body>
           </Card>
 
-          {/* Recent Activity */}
           <RecentActivity />
         </div>
       </div>

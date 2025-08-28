@@ -1,21 +1,30 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../utils/axios';
 import { BlogCard, Typography } from '../components';
 import { isAuthenticated } from '../utils/auth';
-import { ThemeContext } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { showSuccess, showError } from '../utils/toast';
 
 function PublicHome() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const isAuth = isAuthenticated();
-  const { primaryColor, fontSize } = useContext(ThemeContext);
+  const isAuth = useMemo(() => isAuthenticated(), []);
+  const { colors, fontSize, mode } = useTheme();
 
-  const themedStyle = { color: primaryColor };
-  const themedSize = fontSize === 'large' ? 'text-lg' : fontSize === 'small' ? 'text-sm' : '';
+  const fontSizeTokens = {
+    small: 'text-sm',
+    medium: 'text-base',
+    large: 'text-lg'
+  };
+  const themedSize = fontSizeTokens[fontSize] || 'text-base';
 
   const handleLike = async (postId) => {
+    if (!isAuth) {
+      showError('Please sign in to like posts.');
+      return;
+    }
+
     try {
       await API.post(`/posts/${postId}/like`);
       showSuccess('Thanks for the like!');
@@ -30,7 +39,9 @@ function PublicHome() {
   };
 
   useEffect(() => {
-    API.get('/posts')
+    const controller = new AbortController();
+
+    API.get('/posts', { signal: controller.signal })
       .then((res) => {
         const postsData = Array.isArray(res.data) ? res.data : [];
         const sortedPosts = postsData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -38,20 +49,32 @@ function PublicHome() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error('Fetch failed:', err);
-        showError('Failed to load posts. Please refresh.');
-        setPosts([]);
-        setLoading(false);
+        if (err.name !== 'CanceledError') {
+          console.error('Fetch failed:', err);
+          showError('Failed to load posts. Please refresh.');
+          setPosts([]);
+          setLoading(false);
+        }
       });
+
+    return () => controller.abort();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="dashboard-container" style={{ backgroundColor: colors.background }} data-theme={mode}>
+        <Typography style={{ color: colors.textLight }} className={`text-center py-16 ${themedSize}`}>
+          Loading posts...
+        </Typography>
+      </div>
+    );
+  }
   return (
-    <div className="min-h-screen bg-white">
-      {/* Public Header - Clean and Simple */}
+    <div className="min-h-screen" style={{ backgroundColor: colors.background }} data-theme={mode}>
+      {/* Public Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo */}
             <Link to="/" className="group flex items-center space-x-3 hover:opacity-80 transition-all duration-300">
               <div className="relative">
                 <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg shadow-lg group-hover:shadow-xl transition-shadow duration-300">
@@ -69,7 +92,6 @@ function PublicHome() {
               </div>
             </Link>
 
-            {/* Auth Buttons */}
             <div className="flex space-x-4">
               {isAuth ? (
                 <Link
@@ -101,22 +123,22 @@ function PublicHome() {
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col justify-center items-center text-center px-4 py-20">
-        {/* Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
 
-        {/* Animated Grid Pattern */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `
               linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
               linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
             `,
-            backgroundSize: '50px 50px'
-          }}></div>
+              backgroundSize: '50px 50px'
+            }}
+          ></div>
         </div>
 
-        {/* Floating Elements */}
         <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-blue-500/10 rounded-full blur-xl animate-pulse"></div>
         <div className="absolute top-1/3 right-1/4 w-48 h-48 bg-purple-500/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }}></div>
         <div className="absolute bottom-1/4 left-1/3 w-24 h-24 bg-indigo-500/10 rounded-full blur-lg animate-pulse" style={{ animationDelay: '4s' }}></div>
@@ -126,8 +148,8 @@ function PublicHome() {
             <Typography
               variant="hero"
               weight="light"
-              className={`text-white mb-4 leading-tight animate-fadeInUp ${themedSize}`}
-              style={themedStyle}
+              className={`text-white mb-4 leading-tight animate-fadeInUp ${fontSizeTokens[fontSize]}`}
+              style={{ color: colors.text }}
             >
               Craft<br />
               <span className="font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">
@@ -138,14 +160,13 @@ function PublicHome() {
           </div>
           <Typography
             variant="body1"
-            className={`text-gray-300 mb-8 max-w-2xl mx-auto font-light leading-relaxed animate-fadeInUp ${themedSize}`}
-            style={themedStyle}
+            className={`text-gray-300 mb-8 max-w-2xl mx-auto font-light leading-relaxed animate-fadeInUp ${fontSizeTokens[fontSize]}`}
+            style={{ color: colors.text }}
           >
             Where visionary thoughts meet exceptional design.
             <span className="text-blue-400"> Create, share, and inspire </span> with our premium publishing platform.
           </Typography>
 
-          {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fadeInUp" style={{ animationDelay: '1s' }}>
             {isAuth ? (
               <Link
@@ -177,12 +198,12 @@ function PublicHome() {
       </section>
 
       {/* Featured Content */}
-      <section className="py-32 bg-white relative overflow-hidden">
+      <section className="py-32 relative overflow-hidden" style={{ backgroundColor: colors.background }} data-theme={mode}>
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
-            <div className="inline-flex items-center space-x-2 text-sm font-medium text-gray-500 tracking-widest uppercase mb-6">
+            <div className="inline-flex items-center space-x-2 text-sm font-medium" style={{ color: colors.textLight }}>
               <div className="w-8 h-px bg-gray-300"></div>
               <span>Featured Stories</span>
               <div className="w-8 h-px bg-gray-300"></div>
@@ -191,8 +212,8 @@ function PublicHome() {
             <Typography
               variant="h2"
               weight="light"
-              style={themedStyle}
-              className={`mb-6 leading-tight ${themedSize}`}
+              style={{ color: colors.text }}
+              className={`mb-6 leading-tight ${fontSizeTokens[fontSize]}`}
             >
               Latest
               <span className="block font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
@@ -202,7 +223,8 @@ function PublicHome() {
 
             <Typography
               variant="body1"
-              className={`text-gray-600 max-w-3xl mx-auto font-light leading-relaxed ${themedSize}`}
+              style={{ color: colors.textLight }}
+              className={`max-w-3xl mx-auto font-light leading-relaxed ${fontSizeTokens[fontSize]}`}
             >
               Discover extraordinary perspectives from our community of thought leaders and creative minds.
             </Typography>
@@ -227,12 +249,13 @@ function PublicHome() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <Typography variant="h3" weight="light" style={themedStyle} className={`mb-6 ${themedSize}`}>
+              <Typography variant="h3" weight="light" style={{ color: colors.text }} className={`mb-6 ${fontSizeTokens[fontSize]}`}>
                 The Canvas Awaits
               </Typography>
               <Typography
                 variant="body1"
-                className={`text-xl text-gray-600 mb-12 max-w-lg mx-auto font-light leading-relaxed ${themedSize}`}
+                style={{ color: colors.textLight }}
+                className={`text-xl mb-12 max-w-lg mx-auto font-light leading-relaxed ${fontSizeTokens[fontSize]}`}
               >
                 Be the visionary who paints the first stroke. Share your unique perspective with the world.
               </Typography>

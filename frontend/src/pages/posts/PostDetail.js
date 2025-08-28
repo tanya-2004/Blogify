@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -9,7 +9,7 @@ import {
 import API from '../../utils/axios';
 import { isAuthenticated } from '../../utils/auth';
 import CommentForm from '../../components/CommentForm';
-import { ThemeContext } from '../../contexts/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { showSuccess, showError } from '../../utils/toast';
 
 function PostDetail() {
@@ -19,9 +19,13 @@ function PostDetail() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
 
-  const { primaryColor, fontSize } = useContext(ThemeContext);
-  const themedStyle = { color: primaryColor };
-  const themedSize = fontSize === 'large' ? 'text-lg' : fontSize === 'small' ? 'text-sm' : '';
+  const { colors, fontSize, mode } = useTheme();
+  const fontSizeTokens = {
+    small: 'text-sm',
+    medium: 'text-base',
+    large: 'text-lg'
+  };
+  const themedSize = fontSizeTokens[fontSize] || 'text-base';
 
   useEffect(() => {
     API.get(`/posts/${id}`)
@@ -50,7 +54,7 @@ function PostDetail() {
 
   if (loading) {
     return (
-      <div className="dashboard-container">
+      <div className="dashboard-container" style={{ backgroundColor: colors.background }} data-theme={mode}>
         <div className="flex justify-center items-center py-32">
           <LoadingSpinner size="large" />
         </div>
@@ -60,12 +64,12 @@ function PostDetail() {
 
   if (!post) {
     return (
-      <div className="dashboard-container">
+      <div className="dashboard-container" style={{ backgroundColor: colors.background }} data-theme={mode}>
         <div className="text-center py-32">
-          <Typography variant="h2" style={themedStyle} className={`mb-6 ${themedSize}`}>
+          <Typography variant="h2" style={{ color: colors.text }} className={`mb-6 ${themedSize}`}>
             Post Not Found
           </Typography>
-          <Typography variant="body1" className={`text-text-secondary mb-12 max-w-lg mx-auto ${themedSize}`}>
+          <Typography variant="body1" style={{ color: colors.textLight }} className={`mb-12 max-w-lg mx-auto ${themedSize}`}>
             The post you're looking for doesn't exist or has been removed.
           </Typography>
           <Button variant="primary" onClick={() => navigate('/')}>
@@ -77,8 +81,8 @@ function PostDetail() {
   }
 
   return (
-    <div className="dashboard-container">
-      <Card className="post-detail-card overflow-hidden">
+    <div className="dashboard-container" style={{ backgroundColor: colors.background }} data-theme={mode}>
+      <Card className="post-detail-card overflow-hidden" style={{ borderColor: colors.borderLight }}>
         {/* Post Header Section */}
         <div className="relative h-80 overflow-hidden">
           {post.imageUrl ? (
@@ -111,8 +115,8 @@ function PostDetail() {
           <div className="prose prose-lg max-w-none mb-8">
             <Typography
               variant="body1"
-              style={themedStyle}
-              className={`text-text-primary leading-relaxed whitespace-pre-wrap ${themedSize}`}
+              style={{ color: colors.text }}
+              className={`leading-relaxed whitespace-pre-wrap ${themedSize}`}
               aria-label="Post content"
             >
               {post.content}
@@ -121,15 +125,20 @@ function PostDetail() {
 
           {/* Tags */}
           {post.tags?.filter(Boolean).length > 0 && (
-            <div className="mb-12 pt-8 border-t border-border-color">
-              <Typography variant="h3" style={themedStyle} className={`mb-4 ${themedSize}`}>
+            <div className="mb-12 pt-8 border-t" style={{ borderColor: colors.borderLight }}>
+              <Typography variant="h3" style={{ color: colors.text }} className={`mb-4 ${themedSize}`}>
                 Tags
               </Typography>
               <div className="flex flex-wrap gap-3">
                 {post.tags.map((tag, i) => (
                   <span
                     key={i}
-                    className="bg-surface-secondary border border-border-color text-accent-primary px-4 py-2 rounded-full text-sm font-medium"
+                    className="px-4 py-2 rounded-full text-sm font-medium"
+                    style={{
+                      backgroundColor: colors.surfaceSecondary,
+                      border: `1px solid ${colors.borderLight}`,
+                      color: colors.accent
+                    }}
                   >
                     #{tag}
                   </span>
@@ -140,14 +149,14 @@ function PostDetail() {
 
           {/* 💬 Comment Form */}
           {isAuthenticated() && (
-            <div className="mt-12 pt-8 border-t border-border-color">
+            <div className="mt-12 pt-8 border-t" style={{ borderColor: colors.borderLight }}>
               <CommentForm postId={post._id} />
             </div>
           )}
 
           {/* ✏️ Authenticated Actions */}
           {isAuthenticated() && (
-            <div className="mt-12 pt-8 border-t border-border-color">
+            <div className="mt-12 pt-8 border-t" style={{ borderColor: colors.borderLight }}>
               <div className="flex space-x-4">
                 <Button variant="outline" onClick={() => navigate(`/edit/${post._id}`)}>
                   Edit Post

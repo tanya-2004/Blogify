@@ -10,7 +10,7 @@ import { showSuccess } from '../../utils/toast';
 export default function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { toggleSidebar, toggleMobileSidebar } = useSidebar();
-  const { primaryColor, fontSize } = useContext(ThemeContext);
+  const { primaryColor, fontSize, selectedTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
 
   const isLoggedIn = isAuthenticated();
@@ -49,14 +49,14 @@ export default function Header() {
   const email = user?.email || 'user@example.com';
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[60] bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
+    <header className={`fixed top-0 left-0 right-0 z-[60] ${selectedTheme.bg} backdrop-blur-md border-b border-gray-200/50 shadow-sm`}>
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
 
           {/* Logo & Sidebar Toggle */}
           <div className="flex items-center space-x-2">
             <button onClick={handleMenuToggle} className="p-2 rounded-xl group relative">
-              <svg className="w-5 h-5 text-gray-600 group-hover:text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className={`w-5 h-5 ${selectedTheme.text} group-hover:text-gray-800`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
               <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100" style={{ backgroundColor: `${primaryColor}22` }} />
@@ -64,7 +64,7 @@ export default function Header() {
             <Link to="/" className="flex items-center space-x-2">
               <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white w-10 h-10 rounded-xl flex items-center justify-center font-bold shadow-lg">B</div>
               <div>
-                <span className={`font-light text-gray-900 ${fontClass}`}>Blog</span>
+                <span className={`font-light ${selectedTheme.text} ${fontClass}`}>Blog</span>
                 <span className={`font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent ${fontClass}`}>ify</span>
               </div>
             </Link>
@@ -86,7 +86,7 @@ export default function Header() {
               <>
                 {/* Notifications */}
                 <button className="relative p-2 rounded-lg group">
-                  <svg className="w-5 h-5 text-gray-600 group-hover:text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className={`w-5 h-5 ${selectedTheme.text} group-hover:text-gray-800`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-4-4V8a6 6 0 00-12 0v5l-4 4h5m4 0a3 3 0 01-6 0" />
                   </svg>
                   <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-400"></span>
@@ -105,11 +105,11 @@ export default function Header() {
                       <p className={`font-medium ${fontClass}`} style={{ color: primaryColor }}>
                         {username}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className={`text-xs ${selectedTheme.text}`}>
                         {email}
                       </p>
                     </div>
-                    <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className={`w-4 h-4 ${selectedTheme.text} group-hover:text-gray-600`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
@@ -117,7 +117,7 @@ export default function Header() {
                   {/* Dropdown Menu */}
                   {showUserMenu && (
                     <div
-                      className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-[60] transition ease-in-out duration-150"
+                      className={`absolute right-0 mt-2 w-64 ${selectedTheme.bg} ${selectedTheme.text} rounded-xl shadow-lg border border-gray-100 py-2 z-[60] transition ease-in-out duration-150`}
                       role="menu"
                       aria-label="User menu"
                     >
@@ -129,8 +129,8 @@ export default function Header() {
                           {username?.[0] || 'U'}
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-900">{username}</p>
-                          <p className="text-sm text-gray-500">{email || 'user@example.com'}</p>
+                          <p className={`font-semibold ${selectedTheme.text}`}>{username}</p>
+                          <p className="text-sm text-gray-500">{email}</p>
                         </div>
                       </div>
 
@@ -142,7 +142,7 @@ export default function Header() {
                             className="flex items-center px-4 py-3 hover:bg-gray-50 transition ease-in-out duration-150"
                             onClick={() => setShowUserMenu(false)}
                           >
-                            <span className="mr-3 text-gray-400">{icon}</span>
+                            <span className={`mr-3 ${selectedTheme.text}`}>{icon}</span>
                             {label}
                           </Link>
                         ))}

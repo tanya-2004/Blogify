@@ -8,6 +8,7 @@ import NewPostModal from '../../components/modals/NewPostModal';
 import { showSuccess, showError, showLoading, dismissToast } from '../../utils/toast';
 import API from '../../utils/axios';
 import { useUser } from '../../contexts/UserContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 import {
   ProfileTab,
@@ -31,6 +32,16 @@ export default function Settings() {
   const [showModal, setShowModal] = useState(false);
   const [settings, setSettings] = useState(null);
   const { loadUser } = useUser();
+  const { colors, mode } = useTheme();
+
+  const {
+    text,
+    textLight,
+    accent,
+    background,
+    borderLight,
+    primary
+  } = colors;
 
   const tabFromQuery = searchParams.get('tab');
   const activeTab = tabs.some(t => t.id === tabFromQuery) ? tabFromQuery : 'profile';
@@ -69,7 +80,7 @@ export default function Settings() {
       }
 
       setSettings(updatedUser);
-      await loadUser(); 
+      await loadUser();
 
       dismissToast(toastId);
       showSuccess('Settings saved!');
@@ -81,27 +92,39 @@ export default function Settings() {
   };
 
   if (!settings) {
-    return <div className="p-6 text-center text-gray-500">Loading settings...</div>;
+    return (
+      <div
+        className="p-6 text-center"
+        style={{ color: textLight, backgroundColor: background }}
+        data-theme={mode}
+      >
+        Loading settings...
+      </div>
+    );
   }
 
   return (
     <>
-      <div className="dashboard-container">
+      <div
+        className="dashboard-container"
+        style={{ backgroundColor: background }}
+        data-theme={mode}
+      >
         <header className="dashboard-header">
-          <Typography variant="h1" className="flex items-center space-x-3">
-            <svg className="w-8 h-8 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <Typography variant="h1" className="flex items-center space-x-3" style={{ color: text }}>
+            <svg className="w-8 h-8" style={{ color: accent }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <span>Settings</span>
           </Typography>
-          <Typography variant="body2" className="text-text-secondary">
+          <Typography variant="body2" style={{ color: textLight }}>
             Customize your blogging experience
           </Typography>
         </header>
 
         <div className="flex flex-col lg:flex-row gap-8">
           <aside className="lg:w-64">
-            <Card className="settings-nav">
+            <Card className="settings-nav" style={{ borderColor: borderLight }}>
               <nav className="space-y-2">
                 {tabs.map(tab => (
                   <Button
@@ -109,6 +132,7 @@ export default function Settings() {
                     variant={activeTab === tab.id ? 'primary' : 'ghost'}
                     onClick={() => navigate(`/settings?tab=${tab.id}`)}
                     className="w-full justify-start"
+                    style={activeTab === tab.id ? { backgroundColor: primary, color: '#fff' } : { color: text }}
                   >
                     {tab.label}
                   </Button>

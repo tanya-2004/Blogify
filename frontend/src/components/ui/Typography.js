@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import '../../styles/design-system.css';
 import { ThemeContext } from '../../contexts/ThemeContext';
 
-// ⬅ Stable outside component: avoids ESLint warning
 const defaultElements = {
   h1: 'h1',
   h2: 'h2',
@@ -35,14 +34,14 @@ const Typography = ({
   style = {},
   ...rest
 }) => {
-  const { primaryColor, fontSize } = useContext(ThemeContext);
+  const { primaryColor, fontSize, selectedTheme } = useContext(ThemeContext);
 
   const Component = useMemo(() => as || defaultElements[variant] || 'p', [as, variant]);
 
   const fontClass = useMemo(() => {
     return fontSize === 'small' ? 'text-sm'
-         : fontSize === 'large' ? 'text-lg'
-         : 'text-base';
+      : fontSize === 'large' ? 'text-lg'
+        : 'text-base';
   }, [fontSize]);
 
   const textClasses = useMemo(() => {
@@ -52,17 +51,19 @@ const Typography = ({
       color !== 'default' && `text--${color}`,
       align !== 'left' && `text--${align}`,
       gradient && 'text--gradient',
+      selectedTheme.text,
       fontClass,
       className
     ].filter(Boolean).join(' ');
-  }, [variant, weight, color, align, gradient, fontClass, className]);
+  }, [variant, weight, color, align, gradient, fontClass, className, selectedTheme.text]);
 
   const dynamicStyle = useMemo(() => {
     return {
-      color: color === 'primary' ? primaryColor : undefined,
+      color: color === 'primary' ? primaryColor || 'var(--color-primary-default)' : undefined,
+      fontSize: `var(--font-size-${fontSize})`,
       ...style
     };
-  }, [color, primaryColor, style]);
+  }, [color, primaryColor, fontSize, style]);
 
   return (
     <Component className={textClasses} data-testid="typography" style={dynamicStyle} {...rest}>

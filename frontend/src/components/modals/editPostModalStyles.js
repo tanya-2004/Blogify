@@ -1,3 +1,9 @@
+const fontSizes = {
+  small: '12px',
+  base: '14px',
+  large: '16px'
+};
+
 export const getIconStyle = () => ({
   width: '16px',
   height: '16px',
@@ -9,17 +15,20 @@ export const getIconStyle = () => ({
 export const getInputStyle = (theme = {}, focusedField, name) => {
   const {
     colors = {},
-    borderRadius = {}
+    borderRadius = {},
+    fontSize = 'base'
   } = theme;
+
+  const focusRing = `${colors.primary || '#007bff'}20`;
 
   return {
     width: '100%',
     padding: '12px 16px 12px 44px',
     border: `1px solid ${focusedField === name ? colors.primary || '#007bff' : colors.border || '#ddd'}`,
     borderRadius: borderRadius.md || '6px',
-    fontSize: '14px',
+    fontSize: fontSizes[fontSize] || '14px',
     outline: 'none',
-    boxShadow: focusedField === name ? `0 0 0 3px ${(colors.primary || '#007bff')}20` : 'none',
+    boxShadow: focusedField === name ? `0 0 0 3px ${focusRing}` : 'none',
     transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
   };
 };
@@ -37,14 +46,19 @@ export const getModalStyles = (theme = {}) => {
     spacing = {},
     borderRadius = {},
     colors = {},
-    shadows = {}
+    shadows = {},
+    fontSize = 'base',
+    mode = 'light',
+    animations = {}
   } = theme;
+
+  const isDark = mode === 'dark';
 
   return {
     backdrop: {
       position: 'fixed',
       top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)',
       backdropFilter: 'blur(8px)',
       zIndex: 1400,
       display: 'flex',
@@ -112,7 +126,7 @@ export const getModalStyles = (theme = {}) => {
       border: '2px solid transparent',
       borderTop: `2px solid ${colors.primary || '#3B82F6'}`,
       borderRadius: '50%',
-      animation: 'spin 1s linear infinite'
+      animation: animations.spinner || 'spin 1s linear infinite'
     },
     errorContainer: {
       display: 'flex',
@@ -146,7 +160,7 @@ export const getModalStyles = (theme = {}) => {
       alignItems: 'center',
       justifyContent: 'center',
       gap: spacing.sm || '8px',
-      fontSize: '14px',
+      fontSize: fontSizes[fontSize] || '14px',
       borderRadius: borderRadius.md || '6px',
       transition: 'all 0.2s ease',
       whiteSpace: 'nowrap',
@@ -168,10 +182,24 @@ export const getModalStyles = (theme = {}) => {
       width: '16px',
       height: '16px',
       border: '2px solid transparent',
-      borderTop: '2px solid currentColor',
+      borderTop: `2px solid ${colors.primary || '#3B82F6'}`,
       borderRadius: '50%',
-      animation: 'spin 1s linear infinite',
+      animation: animations.spinner || 'spin 1s linear infinite',
       flexShrink: 0
     }
   };
 };
+
+export const getSelectStyle = (fieldName, theme, focusedField) => ({
+  width: '100%',
+  padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+  paddingLeft: `calc(${theme.spacing.md} + 24px)`,
+  fontSize: '14px',
+  borderRadius: theme.borderRadius.sm,
+  border: `1px solid ${focusedField === fieldName ? theme.colors.primary : theme.colors.border}`,
+  backgroundColor: theme.colors.inputBackground,
+  color: theme.colors.text,
+  outline: focusedField === fieldName ? `2px solid ${theme.colors.primary}` : 'none',
+  outlineOffset: '2px',
+  transition: 'border-color 0.2s ease, outline 0.2s ease'
+});

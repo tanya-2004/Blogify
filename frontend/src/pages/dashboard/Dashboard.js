@@ -1,5 +1,5 @@
-import { useContext, useEffect, useState } from 'react';
-import { ThemeContext } from '../../contexts/ThemeContext';
+import { useEffect, useState } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
 import API from '../../utils/axios';
 import { showSuccess, showError } from '../../utils/toast';
 import {
@@ -13,9 +13,11 @@ import {
 import usePostStats from '../../hooks/usePostStats';
 
 function Dashboard() {
+  const { colors, fontSize, mode } = useTheme();
+
   const {
-    primaryColor,
-    secondaryColor,
+    primary: primaryColor,
+    secondary: secondaryColor,
     primaryLight,
     success,
     warning,
@@ -23,8 +25,8 @@ function Dashboard() {
     text,
     textLight,
     borderLight,
-    fontSize
-  } = useContext(ThemeContext);
+    background
+  } = colors;
 
   const statColors = [
     primaryColor || '#3B82F6',
@@ -59,8 +61,15 @@ function Dashboard() {
     return () => document.head.removeChild(style);
   }, []);
 
-  const fontHeading = fontSize === 'large' ? 'text-2xl' : fontSize === 'small' ? 'text-base' : 'text-xl';
-  const fontBody = fontSize === 'large' ? 'text-lg' : fontSize === 'small' ? 'text-sm' : 'text-md';
+  const fontHeading =
+    fontSize === 'large' ? 'text-2xl' :
+      fontSize === 'small' ? 'text-base' :
+        'text-xl';
+
+  const fontBody =
+    fontSize === 'large' ? 'text-lg' :
+      fontSize === 'small' ? 'text-sm' :
+        'text-md';
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this post?')) return;
@@ -91,7 +100,7 @@ function Dashboard() {
 
   return (
     <>
-      <div className="mx-[-1rem]">
+      <div className="mx-[-1rem]" data-theme={mode}>
         {/* Header */}
         <header className="px-4 mb-8">
           <div className="flex items-center gap-4">
@@ -122,8 +131,11 @@ function Dashboard() {
           ].map(({ label, value }, i) => (
             <div
               key={label}
-              className="bg-white rounded-xl p-6 shadow-sm border-l-4"
-              style={{ borderLeftColor: statColors[i] }}
+              className="rounded-xl p-6 shadow-sm border-l-4"
+              style={{
+                backgroundColor: background,
+                borderLeftColor: statColors[i]
+              }}
             >
               <Typography variant="h3" weight="bold" style={{ color: text }} className="mb-1">
                 {(typeof value === 'number' ? value : 0).toLocaleString()}
@@ -146,7 +158,7 @@ function Dashboard() {
               </Typography>
             </div>
           ) : myPosts.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 text-center shadow-xl">
+            <div className="rounded-xl p-12 text-center shadow-xl" style={{ backgroundColor: background }}>
               <Typography variant="h2" weight="bold" style={{ color: text }} className="mb-4">
                 Your Creative Journey Begins
               </Typography>
@@ -240,6 +252,7 @@ function Dashboard() {
           showSuccess('Post published!');
         }}
       />
+
       <ErrorBoundary>
         {showEditModal && (
           <EditPostModal

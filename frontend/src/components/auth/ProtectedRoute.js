@@ -1,9 +1,14 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useMemo } from 'react';
 import { isAuthenticated } from '../../utils/auth';
 
 function ProtectedRoute() {
   const location = useLocation();
-  return isAuthenticated() ? (
+
+  // ✅ Memoize auth check to avoid re-parsing token on every render
+  const isAuth = useMemo(() => isAuthenticated(), []);
+
+  return isAuth ? (
     <Outlet />
   ) : (
     <Navigate

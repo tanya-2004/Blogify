@@ -1,21 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Typography } from './ui';
-import { getStatusClasses } from '../utils/statusColors';
 import ModerationActions from './ModerationActions';
 import CommentReplies from './CommentReplies';
 import { likeComment } from '../services/commentsAPI';
-import { useComments } from '../hooks/useComments';
+import { useTheme } from '../contexts/ThemeContext';
+import ErrorBoundary from './ErrorBoundary';
 
-const CommentCard = ({
+const CommentCardContent = ({
   comment,
   handleApprove,
   handleReject,
   handleDelete,
-  handleReply,     
-  onChange
+  handleReply
 }) => {
-  const { refreshComments } = useComments();
+  const theme = useTheme() || {
+    spacing: { sm: '8px', md: '16px', lg: '24px' },
+    borderRadius: { sm: '6px', lg: '12px' },
+    colors: {
+      background: '#fff',
+      text: '#222',
+      textLight: '#666',
+      border: '#ccc',
+      primary: '#2563EB',
+      primaryLight: '#DBEAFE',
+      success: '#059669',
+      successLight: '#D1FAE5',
+      warning: '#D97706',
+      warningLight: '#FEF3C7',
+      error: '#DC2626',
+      errorLight: '#FEE2E2'
+    },
+    shadows: { card: '0 2px 8px rgba(0,0,0,0.1)' }
+  };
+
   const [likes, setLikes] = useState(comment.likes);
   const [localReplies, setLocalReplies] = useState(comment.replies || []);
 
@@ -36,61 +54,113 @@ const CommentCard = ({
   const handleLike = async () => {
     setLikes((prev) => prev + 1);
     await likeComment(comment._id);
-    await refreshComments();
+  };
+
+  const statusStyles = {
+    approved: {
+      backgroundColor: theme.colors.successLight,
+      color: theme.colors.success
+    },
+    pending: {
+      backgroundColor: theme.colors.warningLight,
+      color: theme.colors.warning
+    },
+    spam: {
+      backgroundColor: theme.colors.errorLight,
+      color: theme.colors.error
+    }
   };
 
   return (
     <div
-      className="bg-white rounded-xl p-6 shadow-md transition hover:shadow-lg space-y-4"
+      style={{
+        backgroundColor: theme.colors.background,
+        borderRadius: theme.borderRadius.lg,
+        padding: theme.spacing.lg,
+        boxShadow: theme.shadows.card,
+        transition: 'box-shadow 0.2s ease'
+      }}
       data-testid={`comment-${comment._id}`}
     >
       {/* Author Header */}
-      <div className="flex justify-between items-start">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center font-semibold">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.md }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            backgroundColor: theme.colors.primaryLight,
+            color: theme.colors.primary,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 600
+          }}>
             {initials}
           </div>
           <div>
-            <Typography variant="body1" className="font-medium text-neutral-900">
+            <Typography variant="body1" weight="medium" style={{ color: theme.colors.text }}>
               {authorName}
             </Typography>
-            <Typography variant="caption" className="text-neutral-500 text-sm">
+            <Typography variant="caption" style={{ color: theme.colors.textLight }}>
               {new Date(comment.date).toLocaleDateString()}
             </Typography>
           </div>
         </div>
-        <span
-          className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${getStatusClasses(comment.status)}`}
-        >
+        <span style={{
+          fontSize: '12px',
+          padding: '4px 8px',
+          borderRadius: theme.borderRadius.sm,
+          fontWeight: 500,
+          textTransform: 'capitalize',
+          ...statusStyles[comment.status]
+        }}>
           {comment.status}
         </span>
       </div>
 
       {/* Comment Text */}
-      <Typography variant="body2" className="text-neutral-700">
+      <Typography variant="body2" style={{ color: theme.colors.text }}>
         {comment.content}
       </Typography>
 
       {/* Post Title */}
-      <div className="flex items-center gap-2 text-sm text-neutral-500">
-        <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm, color: theme.colors.textLight }}>
+        <svg width="16" height="16" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6M9 16h6M9 8h6" />
         </svg>
         <span>On: <strong>{postTitle}</strong></span>
       </div>
 
       {/* Likes & Actions */}
-      <div className="flex justify-between items-center pt-3 mt-3 border-t border-neutral-200 text-sm">
-        <div className="flex gap-4 text-neutral-500">
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingTop: theme.spacing.md,
+        marginTop: theme.spacing.md,
+        borderTop: `1px solid ${theme.colors.border}`
+      }}>
+        <div style={{ display: 'flex', gap: theme.spacing.md, color: theme.colors.textLight }}>
           <button
             onClick={handleLike}
-            className="flex items-center gap-1 hover:text-rose-500 transition"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: theme.colors.textLight
+            }}
           >
             ❤️ {likes}
           </button>
 
           {localReplies.length > 0 && (
-            <span className="flex items-center gap-1">💬 {localReplies.length}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              💬 {localReplies.length}
+            </span>
           )}
         </div>
 
@@ -100,8 +170,7 @@ const CommentCard = ({
           onApprove={() => handleApprove(comment._id)}
           onReject={() => handleReject(comment._id)}
           onDelete={() => handleDelete(comment._id)}
-          onReply={(id, content) => handleReply(id, content)}  
-          onChange={refreshComments}
+          onReply={(id, content) => handleReply(id, content)}
         />
       </div>
 
@@ -109,7 +178,7 @@ const CommentCard = ({
       {localReplies.length > 0 ? (
         <CommentReplies replies={localReplies} />
       ) : (
-        <Typography variant="caption" className="text-neutral-400 text-sm pl-1">
+        <Typography variant="caption" style={{ color: theme.colors.textLight }}>
           No replies yet.
         </Typography>
       )}
@@ -117,13 +186,18 @@ const CommentCard = ({
   );
 };
 
+const CommentCard = (props) => (
+  <ErrorBoundary>
+    <CommentCardContent {...props} />
+  </ErrorBoundary>
+);
+
 CommentCard.propTypes = {
   comment: PropTypes.object.isRequired,
   handleApprove: PropTypes.func,
   handleReject: PropTypes.func,
   handleDelete: PropTypes.func,
-  handleReply: PropTypes.func,
-  onChange: PropTypes.func,
+  handleReply: PropTypes.func
 };
 
 export default CommentCard;

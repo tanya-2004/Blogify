@@ -16,7 +16,7 @@ export const useComments = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    refreshComments();
+    refreshComments(); 
   }, []);
 
   const refreshComments = async () => {
@@ -24,11 +24,24 @@ export const useComments = () => {
       setLoading(true);
       const res = await getComments();
       setComments(res.data);
-      showSuccess('Comments refreshed'); 
     } catch (err) {
       console.error('Failed to fetch comments:', err);
       setError('Failed to refresh comments');
-      showError('Could not load comments'); 
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshAllComments = async () => {
+    try {
+      setLoading(true);
+      const res = await getComments();
+      setComments(res.data);
+      showSuccess('Comments refreshed');
+    } catch (err) {
+      console.error('Failed to fetch comments:', err);
+      setError('Failed to refresh comments');
+      showError('Could not load comments');
     } finally {
       setLoading(false);
     }
@@ -36,11 +49,11 @@ export const useComments = () => {
 
   const handleApprove = async (id) => {
     try {
-      await approveComment(id); // internal toast already fires
-      await refreshComments();
+      await approveComment(id); 
+      await refreshComments();  
     } catch (err) {
       console.error('Failed to approve comment:', err);
-      showError('Approval failed'); // fallback
+      showError('Approval failed');
     }
   };
 
@@ -96,6 +109,7 @@ export const useComments = () => {
     handleReject,
     handleDelete,
     handleReply,
-    refreshComments
+    refreshComments,     
+    refreshAllComments  
   };
 };

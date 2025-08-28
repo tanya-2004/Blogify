@@ -2,14 +2,13 @@ import axios from 'axios';
 import { showError } from './toast';
 import { getToken, removeToken } from './auth';
 
-const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
-});
+const baseURL = process.env.REACT_APP_API_URL;
+console.log('[ENV]', process.env.NODE_ENV);
+console.log('[API] Base URL:', baseURL);
 
-// 🛠 Public API export for updating settings
-export const updateUserSettings = (data) => API.patch('/auth/settings', data);
+const API = axios.create({ baseURL });
 
-// 🔐 Request interceptor: attach token and log
+// 🔐 Request interceptor
 API.interceptors.request.use((req) => {
   const token = getToken();
   const method = req.method?.toUpperCase();
@@ -26,10 +25,10 @@ API.interceptors.request.use((req) => {
   return req;
 });
 
-// ⚠️ Response interceptor: handle global errors
+// ⚠️ Response interceptor
 API.interceptors.response.use(
   (res) => res,
-  (error) => {
+  async (error) => {
     const status = error.response?.status;
     const data = error.response?.data;
 
@@ -41,8 +40,17 @@ API.interceptors.response.use(
       window.location.href = '/signin';
     }
 
+    if ([502, 503].includes(status)) {
+      console.warn('[API] Retrying due to transient error:', status);
+      await new Promise((r) => setTimeout(r, 1000));
+      return API(error.config);
+    }
+
     return Promise.reject(error);
   }
 );
+
+// 🛠 Public API export
+export const updateUserSettings = (data) => API.patch('/auth/settings', data);
 
 export default API;

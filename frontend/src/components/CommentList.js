@@ -1,22 +1,45 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import CommentCard from './CommentCard';
+import { useTheme } from '../contexts/ThemeContext';
+import ErrorBoundary from './ErrorBoundary';
 
-export const CommentList = ({ comments = [], handlers = {} }) => {
+const CommentListContent = ({ comments = [], handlers = {} }) => {
+  const theme = useTheme() || {
+    spacing: { lg: '24px', xl: '32px' },
+    borderRadius: { lg: '12px' },
+    colors: {
+      background: '#fff',
+      border: '#ccc',
+      textLight: '#666',
+      textMuted: '#999'
+    }
+  };
+
   const {
     handleApprove,
     handleReject,
     handleDelete,
     handleReply,
-    refreshComments 
+    refreshComments
   } = handlers;
 
   return (
-    <section className="space-y-6">
+    <section style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.lg }}>
       {comments.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed border-neutral-300 rounded-lg bg-white">
-          <p className="text-lg font-semibold text-neutral-500">No comments</p>
-          <p className="text-sm text-neutral-400">Try a different filter or wait for new comments</p>
+        <div style={{
+          textAlign: 'center',
+          padding: theme.spacing.xl,
+          border: `2px dashed ${theme.colors.border}`,
+          borderRadius: theme.borderRadius.lg,
+          backgroundColor: theme.colors.background
+        }}>
+          <p style={{ fontSize: '16px', fontWeight: 600, color: theme.colors.textLight }}>
+            No comments
+          </p>
+          <p style={{ fontSize: '14px', color: theme.colors.textMuted }}>
+            Try a different filter or wait for new comments
+          </p>
         </div>
       ) : (
         comments.map(c => (
@@ -26,14 +49,20 @@ export const CommentList = ({ comments = [], handlers = {} }) => {
             handleApprove={handleApprove}
             handleReject={handleReject}
             handleDelete={handleDelete}
-            handleReply={handleReply}               
-            onChange={refreshComments}              
+            handleReply={handleReply}
+            onChange={refreshComments}
           />
         ))
       )}
     </section>
   );
 };
+
+export const CommentList = (props) => (
+  <ErrorBoundary>
+    <CommentListContent {...props} />
+  </ErrorBoundary>
+);
 
 CommentList.propTypes = {
   comments: PropTypes.array.isRequired,

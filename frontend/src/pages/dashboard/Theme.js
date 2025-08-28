@@ -1,11 +1,27 @@
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import { Card, Button, Typography, NewPostModal } from '../../components';
-import { ThemeContext } from '../../contexts/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { showSuccess } from '../../utils/toast';
 
 export default function Theme() {
   const [showModal, setShowModal] = useState(false);
-  const { selectedTheme, setSelectedTheme, primaryColor, setPrimaryColor, fontSize, setFontSize } = useContext(ThemeContext);
+  const {
+    selectedTheme,
+    setSelectedTheme,
+    primaryColor,
+    setPrimaryColor,
+    fontSize,
+    setFontSize,
+    colors,
+    mode
+  } = useTheme();
+
+  const fontSizeTokens = {
+    small: 'text-sm',
+    medium: 'text-base',
+    large: 'text-lg'
+  };
+  const themedSize = fontSizeTokens[fontSize] || 'text-base';
 
   const themes = [
     { id: 'light', name: 'Light', bg: 'bg-white', text: 'text-gray-900', accent: 'bg-blue-500' },
@@ -25,23 +41,23 @@ export default function Theme() {
 
   return (
     <>
-      <div className="dashboard-container">
+      <div className="dashboard-container" style={{ backgroundColor: colors.background }} data-theme={mode}>
         {/* Header */}
         <div className="dashboard-header flex justify-between items-start">
           <div>
-            <Typography variant="h1" className="flex items-center space-x-3">
-              <svg className="w-8 h-8 text-accent-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <Typography variant="h1" style={{ color: colors.text }} className="flex items-center space-x-3">
+              <svg className="w-8 h-8" style={{ color: colors.accent }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
               </svg>
               <span>Theme Customization</span>
             </Typography>
-            <Typography variant="body2" className="text-text-secondary">
+            <Typography variant="body2" style={{ color: colors.textLight }}>
               Customize the appearance of your blog to match your style
             </Typography>
           </div>
 
-          <Button variant="primary" onClick={() => setShowModal(true)} className="flex items-center space-x-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <Button variant="primary" onClick={() => setShowModal(true)} className="flex items-center space-x-2" style={{ backgroundColor: primaryColor }}>
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             <span>Create Post</span>
@@ -49,8 +65,8 @@ export default function Theme() {
         </div>
 
         {/* Theme Selection */}
-        <Card className="mb-6">
-          <Typography variant="h2" className="mb-4">Choose Theme</Typography>
+        <Card className="mb-6" style={{ borderColor: colors.borderLight }}>
+          <Typography variant="h2" style={{ color: colors.text }} className="mb-4">Choose Theme</Typography>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {themes.map((theme) => (
               <button
@@ -62,15 +78,15 @@ export default function Theme() {
                   <div className={`theme-preview__accent ${theme.accent}`} />
                   <div className={`theme-preview__line ${theme.text === 'text-white' ? 'bg-white' : 'bg-gray-400'}`} />
                 </div>
-                <Typography variant="caption" className="font-medium">{theme.name}</Typography>
+                <Typography variant="caption" className="font-medium" style={{ color: colors.text }}>{theme.name}</Typography>
               </button>
             ))}
           </div>
         </Card>
 
         {/* Primary Color Selection */}
-        <Card className="mb-6">
-          <Typography variant="h2" className="mb-4">Primary Color</Typography>
+        <Card className="mb-6" style={{ borderColor: colors.borderLight }}>
+          <Typography variant="h2" style={{ color: colors.text }} className="mb-4">Primary Color</Typography>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
             {colorOptions.map((color) => (
               <button
@@ -79,15 +95,15 @@ export default function Theme() {
                 className={`color-option ${primaryColor === color.value ? 'color-option--selected' : ''}`}
               >
                 <div className="color-swatch" style={{ backgroundColor: color.value }} />
-                <Typography variant="caption" className="font-medium">{color.name}</Typography>
+                <Typography variant="caption" className="font-medium" style={{ color: colors.text }}>{color.name}</Typography>
               </button>
             ))}
           </div>
         </Card>
 
         {/* Font Size Selection */}
-        <Card className="mb-6">
-          <Typography variant="h2" className="mb-4">Typography</Typography>
+        <Card className="mb-6" style={{ borderColor: colors.borderLight }}>
+          <Typography variant="h2" style={{ color: colors.text }} className="mb-4">Typography</Typography>
           <select value={fontSize} onChange={(e) => setFontSize(e.target.value)} className="form-select w-full">
             <option value="small">Small</option>
             <option value="medium">Medium</option>
@@ -96,15 +112,15 @@ export default function Theme() {
         </Card>
 
         {/* Preview */}
-        <Card className="mb-6">
-          <Typography variant="h2" className="mb-4">Preview</Typography>
+        <Card className="mb-6" style={{ borderColor: colors.borderLight }}>
+          <Typography variant="h2" style={{ color: colors.text }} className="mb-4">Preview</Typography>
           <div className="theme-preview-container">
             <div className="mb-4">
               <div className="theme-preview-header" style={{ backgroundColor: primaryColor }}>Sample Header</div>
             </div>
-            <div className={`theme-preview-content ${fontSize === 'small' ? 'text-sm' : fontSize === 'large' ? 'text-lg' : 'text-base'}`}>
-              <Typography variant="h3" className="mb-2">Sample Blog Post Title</Typography>
-              <Typography variant="body2" className="text-text-secondary mb-4">
+            <div className={`theme-preview-content ${themedSize}`}>
+              <Typography variant="h3" style={{ color: colors.text }} className="mb-2">Sample Blog Post Title</Typography>
+              <Typography variant="body2" style={{ color: colors.textLight }} className="mb-4">
                 This is a sample blog post content to show how your theme will look.
               </Typography>
               <Button variant="primary" style={{ backgroundColor: primaryColor }}>
@@ -120,6 +136,7 @@ export default function Theme() {
             size="large"
             onClick={() => showSuccess('Theme settings saved!')}
             className="save-theme-btn"
+            style={{ backgroundColor: primaryColor }}
           >
             Save Changes
           </Button>

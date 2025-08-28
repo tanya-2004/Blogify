@@ -1,11 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
 import API from '../../utils/axios';
 import Button from '../ui/Button';
 import Typography from '../ui/Typography';
 import { isAuthenticated, debugAuthStatus } from '../../utils/auth';
 import { showError, showSuccess } from '../../utils/toast';
+import {
+  getInputStyle,
+  getTextareaStyle,
+  getSelectStyle,
+  getIconStyle
+} from './editPostModalStyles';
 
 export default function NewPostModal({ open, onClose, onPostCreated }) {
+  const theme = useTheme();
+
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState('');
@@ -14,20 +23,17 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const titleInputRef = useRef(null);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (open && titleInputRef.current) {
       setTimeout(() => titleInputRef.current.focus(), 100);
     }
-    if (open) {
-      debugAuthStatus();
-    }
+    if (open) debugAuthStatus();
   }, [open]);
 
   const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+    if (e.target === e.currentTarget) onClose();
   };
 
   const handleSubmit = async (e) => {
@@ -84,80 +90,9 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
     }
   };
 
-
   if (!open) return null;
 
-  // Dynamic styling variables for consistency
-  const theme = {
-    colors: {
-      primary: '#3B82F6',
-      primaryLight: '#EFF6FF',
-      secondary: '#6B7280',
-      border: '#D1D5DB',
-      borderLight: '#E5E7EB',
-      background: '#F9FAFB',
-      white: '#FFFFFF',
-      error: '#DC2626',
-      success: '#10B981',
-      text: '#1F2937',
-      textLight: '#6B7280'
-    },
-    spacing: {
-      xs: '4px',
-      sm: '8px',
-      md: '12px',
-      lg: '16px',
-      xl: '24px'
-    },
-    borderRadius: {
-      sm: '6px',
-      md: '8px',
-      lg: '12px'
-    },
-    shadows: {
-      modal: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-      light: '0 1px 3px rgba(0, 0, 0, 0.1)'
-    }
-  };
-
-  const iconStyle = {
-    width: '16px',
-    height: '16px',
-    minWidth: '16px',
-    minHeight: '16px',
-    flexShrink: 0
-  };
-
-  // Dynamic input style based on focus state
-  const getInputStyle = (fieldName) => ({
-    width: '100%',
-    padding: '12px 16px 12px 44px',
-    border: `1px solid ${focusedField === fieldName ? theme.colors.primary : theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    fontSize: '14px',
-    outline: 'none',
-    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-    boxShadow: focusedField === fieldName ? `0 0 0 3px ${theme.colors.primary}20` : 'none'
-  });
-
-  const getTextareaStyle = (fieldName) => ({
-    ...getInputStyle(fieldName),
-    resize: 'vertical',
-    minHeight: '120px',
-    fontFamily: 'inherit',
-    lineHeight: '1.5'
-  });
-
-  const getSelectStyle = (fieldName) => ({
-    ...getInputStyle(fieldName),
-    cursor: 'pointer',
-    appearance: 'none',
-    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-    backgroundPosition: 'right 12px center',
-    backgroundRepeat: 'no-repeat',
-    backgroundSize: '16px',
-    paddingRight: '40px'
-  });
+  const iconStyle = getIconStyle(theme);
 
   return (
     <div
@@ -166,6 +101,7 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="new-post-modal-title"
+      data-theme={theme.mode || 'light'}
       style={{
         position: 'fixed',
         top: 0,
@@ -184,9 +120,9 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
       <div
         className="blog-modal-container new-post-modal-container"
         style={{
-          backgroundColor: theme.colors.white,
+          backgroundColor: theme.colors.white || '#fff',
           borderRadius: theme.borderRadius.lg,
-          padding: '0',
+          padding: 0,
           maxWidth: '600px',
           width: '100%',
           maxHeight: '90vh',
@@ -298,7 +234,7 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                   color: focusedField === 'title' ? theme.colors.primary : theme.colors.secondary,
                   transition: 'color 0.2s ease'
                 }}>
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={getIconStyle()}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                 </div>
@@ -311,7 +247,7 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                   onFocus={() => setFocusedField('title')}
                   onBlur={() => setFocusedField(null)}
                   required
-                  style={getInputStyle('title')}
+                  style={getInputStyle(theme, focusedField, 'title')}
                 />
               </div>
             </div>
@@ -337,7 +273,7 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                   transition: 'color 0.2s ease',
                   zIndex: 1
                 }}>
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={getIconStyle()}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                 </div>
@@ -346,7 +282,7 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                   onChange={(e) => setFieldContext(e.target.value)}
                   onFocus={() => setFocusedField('fieldContext')}
                   onBlur={() => setFocusedField(null)}
-                  style={getSelectStyle('fieldContext')}
+                  style={getSelectStyle('fieldContext', theme, focusedField)}
                 >
                   <option value="">Select a field or context...</option>
                   <option value="Technology">Technology</option>
@@ -383,7 +319,7 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                   color: focusedField === 'content' ? theme.colors.primary : theme.colors.secondary,
                   transition: 'color 0.2s ease'
                 }}>
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={getIconStyle()}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </div>
@@ -396,22 +332,19 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                   onBlur={() => setFocusedField(null)}
                   required
                   rows={8}
-                  style={getTextareaStyle('content')}
+                  style={getTextareaStyle(theme, focusedField, 'content')}
                 />
               </div>
             </div>
 
             {/* Tags */}
             <div style={{ marginBottom: '20px' }}>
-              <Typography
-                variant="body1"
-                style={{
-                  marginBottom: theme.spacing.sm,
-                  display: 'block',
-                  fontWeight: '500',
-                  color: theme.colors.text
-                }}
-              >
+              <Typography variant="body1" style={{
+                marginBottom: theme.spacing.sm,
+                display: 'block',
+                fontWeight: '500',
+                color: theme.colors.text
+              }}>
                 Tags (Optional)
               </Typography>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -421,40 +354,47 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                   color: focusedField === 'tags' ? theme.colors.primary : theme.colors.secondary,
                   transition: 'color 0.2s ease'
                 }}>
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={getIconStyle()}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
                 </div>
                 <input
                   type="text"
+                  aria-label="Tags"
                   placeholder="technology, design, programming"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                   onFocus={() => setFocusedField('tags')}
                   onBlur={() => setFocusedField(null)}
-                  style={getInputStyle('tags')}
+                  style={getInputStyle(theme, focusedField, 'tags')}
                 />
               </div>
-              <Typography
-                variant="caption"
-                style={{
-                  marginTop: theme.spacing.xs,
-                  fontSize: '12px',
-                  color: theme.colors.textLight,
-                  display: 'block'
-                }}
-              >
+              <Typography variant="caption" style={{
+                marginTop: theme.spacing.xs,
+                fontSize: '12px',
+                color: theme.colors.textLight,
+                display: 'block'
+              }}>
                 Separate tags with commas
               </Typography>
             </div>
 
-            <div style={{ display: 'flex', gap: theme.spacing.xs, flexWrap: 'wrap', marginTop: theme.spacing.sm }}>
+            {/* Tag Chips */}
+            <div style={{
+              display: 'flex',
+              gap: theme.spacing.xs,
+              flexWrap: 'wrap',
+              marginTop: theme.spacing.sm
+            }}>
               {tags
                 .split(',')
                 .map((tag) => tag.trim())
                 .filter(Boolean)
                 .map((tag, i) => (
                   <span key={i} style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
                     padding: '4px 8px',
                     fontSize: '12px',
                     backgroundColor: theme.colors.primary + '15',
@@ -462,21 +402,39 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                     borderRadius: theme.borderRadius.sm
                   }}>
                     {tag}
+                    <button
+                      type="button"
+                      aria-label={`Remove tag ${tag}`}
+                      onClick={() => {
+                        const updated = tags
+                          .split(',')
+                          .filter((t, idx) => idx !== i)
+                          .join(', ');
+                        setTags(updated);
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: theme.colors.primary,
+                        cursor: 'pointer',
+                        padding: 0,
+                        lineHeight: 1
+                      }}
+                    >
+                      ×
+                    </button>
                   </span>
                 ))}
             </div>
 
             {/* Image URL */}
             <div style={{ marginBottom: '20px' }}>
-              <Typography
-                variant="body1"
-                style={{
-                  marginBottom: theme.spacing.sm,
-                  display: 'block',
-                  fontWeight: '500',
-                  color: theme.colors.text
-                }}
-              >
+              <Typography variant="body1" style={{
+                marginBottom: theme.spacing.sm,
+                display: 'block',
+                fontWeight: '500',
+                color: theme.colors.text
+              }}>
                 Featured Image URL (Optional)
               </Typography>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -486,37 +444,55 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                   color: focusedField === 'imageUrl' ? theme.colors.primary : theme.colors.secondary,
                   transition: 'color 0.2s ease'
                 }}>
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={iconStyle}>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={getIconStyle()}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <input
                   type="url"
+                  aria-label="Featured Image URL"
                   placeholder="https://example.com/image.jpg"
                   value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
+                  onChange={(e) => {
+                    setImageUrl(e.target.value);
+                    setImageError(false);
+                  }}
                   onFocus={() => setFocusedField('imageUrl')}
                   onBlur={() => setFocusedField(null)}
-                  style={getInputStyle('imageUrl')}
+                  style={getInputStyle(theme, focusedField, 'imageUrl')}
                 />
               </div>
-              {imageUrl && (
+              {imageUrl && !imageError && (
                 <img
                   src={imageUrl}
                   alt="Featured preview"
+                  onError={() => {
+                    setImageError(true);
+                    setImageUrl('');
+                  }}
                   style={{
                     marginTop: theme.spacing.sm,
                     maxWidth: '100%',
                     borderRadius: theme.borderRadius.sm,
                     border: `1px solid ${theme.colors.borderLight}`
                   }}
-                  onError={() => setImageUrl('')}
                 />
+              )}
+              {imageError && (
+                <Typography variant="caption" style={{
+                  marginTop: theme.spacing.xs,
+                  fontSize: '12px',
+                  color: theme.colors.error,
+                  display: 'block'
+                }}>
+                  Could not load image. Please check the URL.
+                </Typography>
               )}
             </div>
           </form>
         </main>
 
+        {/* Footer */}
         <footer style={{
           padding: `${theme.spacing.md} ${theme.spacing.xl} ${theme.spacing.lg} ${theme.spacing.xl}`,
           borderTop: `1px solid ${theme.colors.borderLight}`,
@@ -532,6 +508,8 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
               variant="secondary"
               onClick={onClose}
               disabled={loading}
+              tabIndex={0}
+              aria-label="Cancel post creation"
               style={{
                 minWidth: '100px',
                 transition: 'all 0.2s ease'
@@ -570,7 +548,7 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
                     width: '16px',
                     height: '16px',
                     border: '2px solid transparent',
-                    borderTop: '2px solid currentColor',
+                    borderTop: `2px solid ${theme.colors.primary}`,
                     borderRadius: '50%',
                     animation: 'spin 1s linear infinite',
                     flexShrink: 0
@@ -608,6 +586,6 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
           </div>
         </footer>
       </div>
-    </div >
+    </div>
   );
 }

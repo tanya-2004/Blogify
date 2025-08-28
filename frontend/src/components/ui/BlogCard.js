@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import Card from './Card';
 import Typography from './Typography';
@@ -13,13 +12,13 @@ const BlogCard = ({ post, mode = 'public', onEdit, onDelete, onLike }) => {
   const excerpt = post.content ? post.content.slice(0, 160) + '...' : '';
   const publishDate = post.createdAt
     ? new Date(post.createdAt).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      })
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })
     : 'Unknown';
 
-  const formattedStats = postStatsSummary([post]); 
+  const formattedStats = postStatsSummary([post]);
 
   return (
     <Card
@@ -138,7 +137,7 @@ const BlogCard = ({ post, mode = 'public', onEdit, onDelete, onLike }) => {
               size="small"
               onClick={() => onLike(post._id)}
               aria-label="Like this post"
-              className="text-pink-600 hover:text-pink-700 transition-colors duration-200"
+              className="text-accent-primary hover:opacity-80 transition-colors duration-200"
             >
               ❤️ {(typeof post.likes === 'number' ? post.likes : 0).toLocaleString()}
             </Button>
@@ -150,26 +149,6 @@ const BlogCard = ({ post, mode = 'public', onEdit, onDelete, onLike }) => {
       </Card.Body>
     </Card>
   );
-};
-
-BlogCard.propTypes = {
-  post: PropTypes.shape({
-    _id: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    content: PropTypes.string.isRequired,
-    author: PropTypes.shape({ username: PropTypes.string }),
-    createdAt: PropTypes.string.isRequired,
-    imageUrl: PropTypes.string,
-    category: PropTypes.string,
-    tags: PropTypes.arrayOf(PropTypes.string),
-    views: PropTypes.number,
-    likes: PropTypes.number,
-    commentsCount: PropTypes.number
-  }).isRequired,
-  mode: PropTypes.oneOf(['public', 'dashboard']),
-  onEdit: PropTypes.func,
-  onDelete: PropTypes.func,
-  onLike: PropTypes.func
 };
 
 export default BlogCard;
