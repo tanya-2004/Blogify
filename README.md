@@ -28,7 +28,7 @@ Blogify is a full-stack, modular blogging platform built for performance, mainta
 | Backend      | Node.js, Express, MongoDB           |
 | Auth         | JWT, bcrypt                         |
 | Styling      | Design tokens, CSS variables        |
-| Deployment   | Vercel / Netlify / Render           |
+| Deployment   | Vercel(Frontend), Render(Backend)   |
 
 ---
 
