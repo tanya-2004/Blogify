@@ -4,12 +4,14 @@ Welcome to the Blogify project! This guide explains how to work together effecti
 
 ## 📁 Repository Structure
 Blogify/
+```
 ├── backend/ # Node.js + Express server
 ├── frontend/ # React app
 ├── .gitignore
 ├── README.md
 ├── STRUCTURE.md
 └── TEAM_GUIDE.md
+```
 
 ## 🚀 Getting Started (First Time)
 
@@ -18,9 +20,9 @@ git clone https://github.com/tanya-2004/Blogify.git
 cd Blogify
 cd backend && npm install
 cd ../frontend && npm install
+```
 
 Create environment files:
-
 `backend/.env`
 ```env
 PORT=5000
@@ -99,7 +101,6 @@ git push origin feature/your-task-name
 
 Keeping Your Branch Updated
 If main changes while you are working:
-
 ```bash
 git checkout main
 git pull origin main
@@ -110,7 +111,6 @@ git push origin feature/your-task-name
 
 Pull Request Template
 Create .github/pull_request_template.md with:
-
 ```markdown
 ## Description
 - What does this PR do?
