@@ -1,74 +1,59 @@
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// 🛡️ Generate JWT with user payload
-const generateToken = (user) => {
-  return jwt.sign(
-    {
-      id: user._id,
-      username: user.username,
-      email: user.email
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: '1h' }
-  );
+// 🛡️ Generate JWT (only user id in payload)
+const generateToken = (userId) => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
 };
 
-
-// 📝 Signup Controller
+// 📝 Signup
 exports.signup = async (req, res) => {
-  const username = req.body.username?.trim();
-  const email = req.body.email?.trim();
-  const password = req.body.password?.trim();
+  const { username, email, password } = req.body;
 
   if (!username || !email || !password) {
-    return res.status(400).json({ error: 'All fields are required.' });
+    return res.status(400).json({ success: false, message: 'All fields are required.' });
   }
 
   try {
     const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ msg: 'User already exists' });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'User already exists' });
+    }
 
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-
-    const newUser = new User({ username, email, passwordHash });
+    // Pass plain password – model pre-save will hash it
+    const newUser = new User({ username, email, passwordHash: password });
     await newUser.save();
 
-    res.status(201).json({ msg: 'User registered successfully' });
+    res.status(201).json({ success: true, message: 'User registered successfully' });
   } catch (err) {
     console.error('Signup error:', err.message);
-    res.status(500).json({ error: 'Signup failed' });
+    res.status(500).json({ success: false, message: 'Signup failed' });
   }
 };
 
-// 🔐 Login Controller
+// 🔐 Login
 exports.login = async (req, res) => {
-  const email = req.body.email?.trim();
-  const password = req.body.password?.trim();
+  const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required.' });
+    return res.status(400).json({ success: false, message: 'Email and password are required.' });
   }
 
   try {
-    // 👀 Explicitly select passwordHash if it's excluded in schema
     const user = await User.findOne({ email }).select('+passwordHash');
-
     if (!user) {
-      return res.status(400).json({ msg: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ msg: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // ✅ Generate token only after successful match
-    const token = generateToken(user);
+    const token = generateToken(user._id);
 
-    return res.status(200).json({
+    res.status(200).json({
+      success: true,
       token,
       user: {
         id: user._id,
@@ -77,40 +62,28 @@ exports.login = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('[LOGIN ERROR]', err); // Full log for debugging
-    return res.status(500).json({ error: 'Login failed due to server error.' });
+    console.error('Login error:', err);
+    res.status(500).json({ success: false, message: 'Login failed due to server error' });
   }
 };
 
-// 🔐 Get Current User Data
+// 👤 Get current user (using req.userId from middleware)
 exports.getCurrentUser = async (req, res) => {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const user = await User.findById(userId); 
-
+    const user = await User.findById(req.userId).select('-passwordHash');
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
-
-    res.status(200).json({ user });
+    res.status(200).json({ success: true, user });
   } catch (err) {
-    console.error('[GET /auth/me ERROR]', err);
-    res.status(500).json({ error: 'Failed to fetch user data' });
+    console.error('Get user error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch user data' });
   }
 };
 
-// 🔄 Update Settings
+// 🔄 Update settings
 exports.updateSettings = async (req, res) => {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
     const allowedFields = [
       'username', 'email', 'bio', 'avatarUrl',
       'profilePublic', 'showEmail', 'allowComments', 'moderateComments',
@@ -122,28 +95,36 @@ exports.updateSettings = async (req, res) => {
 
     const updates = {};
     for (const key of allowedFields) {
-      if (key in req.body) {
-        updates[key] = req.body[key];
-      }
+      if (key in req.body) updates[key] = req.body[key];
     }
 
     if (Object.keys(updates).length === 0) {
-      return res.status(400).json({ error: 'No valid fields to update.' });
+      return res.status(400).json({ success: false, message: 'No valid fields to update' });
+    }
+
+    // Prevent email/username duplicates (basic check – you may improve with validation)
+    if (updates.email) {
+      const existing = await User.findOne({ email: updates.email, _id: { $ne: req.userId } });
+      if (existing) {
+        return res.status(400).json({ success: false, message: 'Email already in use' });
+      }
+    }
+    if (updates.username) {
+      const existing = await User.findOne({ username: updates.username, _id: { $ne: req.userId } });
+      if (existing) {
+        return res.status(400).json({ success: false, message: 'Username already taken' });
+      }
     }
 
     const updatedUser = await User.findByIdAndUpdate(
-      userId,
+      req.userId,
       { $set: updates },
       { new: true, runValidators: true }
-    );
+    ).select('-passwordHash');
 
-    if (!updatedUser) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.status(200).json({ msg: 'User updated successfully', user: updatedUser });
+    res.status(200).json({ success: true, message: 'User updated', user: updatedUser });
   } catch (err) {
-    console.error('[SETTINGS ERROR]', err);
-    res.status(500).json({ error: 'Update failed' });
+    console.error('Update settings error:', err);
+    res.status(500).json({ success: false, message: 'Update failed' });
   }
 };

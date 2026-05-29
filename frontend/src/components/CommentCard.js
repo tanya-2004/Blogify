@@ -51,9 +51,13 @@ const CommentCardContent = ({
     ? comment.post.title
     : comment.post;
 
-  const handleLike = async () => {
-    setLikes((prev) => prev + 1);
-    await likeComment(comment._id);
+  const handleLikeClick = async () => {
+    try {
+      const newLikes = await likeComment(comment._id);
+      setLikes(newLikes);
+    } catch (err) {
+      // error already shown in API
+    }
   };
 
   const statusStyles = {
@@ -103,7 +107,7 @@ const CommentCardContent = ({
               {authorName}
             </Typography>
             <Typography variant="caption" style={{ color: theme.colors.textLight }}>
-              {new Date(comment.date).toLocaleDateString()}
+              {new Date(comment.createdAt || comment.date).toLocaleDateString()}
             </Typography>
           </div>
         </div>
@@ -125,12 +129,14 @@ const CommentCardContent = ({
       </Typography>
 
       {/* Post Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm, color: theme.colors.textLight }}>
-        <svg width="16" height="16" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6M9 16h6M9 8h6" />
-        </svg>
-        <span>On: <strong>{postTitle}</strong></span>
-      </div>
+      {postTitle && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm, color: theme.colors.textLight }}>
+          <svg width="16" height="16" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6M9 16h6M9 8h6" />
+          </svg>
+          <span>On: <strong>{postTitle}</strong></span>
+        </div>
+      )}
 
       {/* Likes & Actions */}
       <div style={{
@@ -143,7 +149,7 @@ const CommentCardContent = ({
       }}>
         <div style={{ display: 'flex', gap: theme.spacing.md, color: theme.colors.textLight }}>
           <button
-            onClick={handleLike}
+            onClick={handleLikeClick}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -175,12 +181,8 @@ const CommentCardContent = ({
       </div>
 
       {/* Replies Thread */}
-      {localReplies.length > 0 ? (
+      {localReplies.length > 0 && (
         <CommentReplies replies={localReplies} />
-      ) : (
-        <Typography variant="caption" style={{ color: theme.colors.textLight }}>
-          No replies yet.
-        </Typography>
       )}
     </div>
   );

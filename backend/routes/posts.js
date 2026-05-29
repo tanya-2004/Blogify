@@ -1,34 +1,55 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middleware/authMiddleware');
-const { likePost } = require('../controllers/postController');
+const { auth } = require('../middleware/authMiddleware'); // changed from authenticate
+const { body } = require('express-validator');
+const validate = require('../middleware/validate');
 
 const {
   getAllPosts,
   getPostById,
   createPost,
-  updatePost, 
+  updatePost,
   deletePost,
-  getMyPosts
+  getMyPosts,
+  likePost
 } = require('../controllers/postController');
 
-router.get('/test-auth', authenticate, (req, res) => {
+// Validation rules
+const postValidation = [
+  body('title').trim().notEmpty().withMessage('Title is required').isLength({ max: 200 }),
+  body('content').trim().notEmpty().withMessage('Content is required'),
+  body('category').optional().trim(),
+  body('tags').optional().isArray(),
+  body('imageUrl').optional().isURL()
+];
+
+const updateValidation = [
+  body('title').optional().trim().isLength({ max: 200 }),
+  body('content').optional().trim(),
+  body('category').optional().trim(),
+  body('tags').optional().isArray(),
+  body('imageUrl').optional().isURL()
+];
+
+// Test route (optional)
+router.get('/test-auth', auth, (req, res) => {
   res.json({
-    msg: 'Authentication successful',
-    userId: req.user,
+    success: true,
+    message: 'Authentication successful',
+    userId: req.userId,
     timestamp: new Date().toISOString()
   });
 });
 
-// 🟢 Public Routes
+// Public routes
 router.get('/', getAllPosts);
-
-// 🔐 Protected Routes (place /mine BEFORE /:id)
-router.get('/mine', authenticate, getMyPosts);
 router.get('/:id', getPostById);
-router.post('/', authenticate, createPost);
-router.put('/:id', authenticate, updatePost);
-router.delete('/:id', authenticate, deletePost);
-router.post('/:id/like', authenticate, likePost);
+
+// Protected routes (must be after public but /mine before /:id)
+router.get('/mine', auth, getMyPosts);
+router.post('/', auth, postValidation, validate, createPost);
+router.put('/:id', auth, updateValidation, validate, updatePost);
+router.delete('/:id', auth, deletePost);
+router.post('/:id/like', auth, likePost);
 
 module.exports = router;

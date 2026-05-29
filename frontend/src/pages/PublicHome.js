@@ -19,6 +19,21 @@ function PublicHome() {
   };
   const themedSize = fontSizeTokens[fontSize] || 'text-base';
 
+  const fetchPosts = async () => {
+    try {
+      const res = await API.get('/posts');
+      const postsData = res.data.posts || [];
+      const sortedPosts = postsData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setPosts(sortedPosts);
+    } catch (err) {
+      console.error('Fetch posts error:', err);
+      showError('Failed to load posts. Please refresh.');
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLike = async (postId) => {
     if (!isAuth) {
       showError('Please sign in to like posts.');
@@ -28,35 +43,16 @@ function PublicHome() {
     try {
       await API.post(`/posts/${postId}/like`);
       showSuccess('Thanks for the like!');
-      const res = await API.get('/posts');
-      const postsData = Array.isArray(res.data) ? res.data : [];
-      const sortedPosts = postsData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      setPosts(sortedPosts);
+      await fetchPosts(); // refresh after like
     } catch (err) {
       console.error('Like failed:', err);
-      showError('Failed to register like. Please try again.');
+      showError(err.response?.data?.message || 'Failed to register like.');
     }
   };
 
   useEffect(() => {
     const controller = new AbortController();
-
-    API.get('/posts', { signal: controller.signal })
-      .then((res) => {
-        const postsData = Array.isArray(res.data) ? res.data : [];
-        const sortedPosts = postsData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        setPosts(sortedPosts);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (err.name !== 'CanceledError') {
-          console.error('Fetch failed:', err);
-          showError('Failed to load posts. Please refresh.');
-          setPosts([]);
-          setLoading(false);
-        }
-      });
-
+    fetchPosts();
     return () => controller.abort();
   }, []);
 

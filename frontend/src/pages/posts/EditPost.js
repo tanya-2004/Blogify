@@ -17,19 +17,24 @@ function EditPost() {
 
   useEffect(() => {
     API.get(`/posts/${id}`)
-      .then((res) => {
-        const post = res.data;
-        setTitle(post.title);
-        setContent(post.content);
-        setTags(post.tags.join(', '));
-        setImageUrl(post.imageUrl || '');
+      .then(({ data }) => {
+        if (data.success && data.post) {
+          const post = data.post;
+          setTitle(post.title);
+          setContent(post.content);
+          setTags(post.tags.join(', '));
+          setImageUrl(post.imageUrl || '');
+        } else {
+          showError(data.message || 'Post not found');
+          navigate('/dashboard');
+        }
         setLoading(false);
       })
       .catch((err) => {
-        console.error('Failed to fetch post:', err);
+        console.error(err);
         setLoading(false);
       });
-  }, [id]);
+  }, [id, navigate]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -47,7 +52,7 @@ function EditPost() {
       showSuccess('Post updated!');
       navigate(`/post/${id}`);
     } catch (err) {
-      const msg = err.response?.data?.msg || 'Update failed';
+      const msg = err.response?.data?.message || 'Update failed';
       showError(msg);
     } finally {
       setIsSubmitting(false);

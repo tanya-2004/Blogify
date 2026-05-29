@@ -1,63 +1,43 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
 
-// Middleware with full user hydration
-exports.authenticate = async (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1]?.trim();
-    if (!token) return res.status(401).json({ message: 'Unauthorized' });
-
-    if (!process.env.JWT_SECRET) {
-      console.error('JWT_SECRET is missing in environment config');
-      return res.status(500).json({ message: 'Server configuration error' });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id);
-    next();
-  } catch (err) {
-    console.log('Auth (with user) - Token error:', err.message);
-    return res.status(401).json({
-      message:
-        err.name === 'TokenExpiredError'
-          ? 'Token expired. Please log in again.'
-          : 'Invalid or expired token.'
-    });
-  }
-};
-
-// Middleware that just verifies token, adds user ID
-exports.tokenOnly = (req, res, next) => {
-  const authHeader = req.header('Authorization');
+// Standard authentication: verifies token, attaches req.userId
+exports.auth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
   const token = authHeader?.split(' ')[1]?.trim();
 
-  console.log('Auth (tokenOnly) - Token received:', token ? 'Yes' : 'No');
-  console.log('Auth (tokenOnly) - Full header:', authHeader);
-
   if (!token) {
-    console.log('Auth (tokenOnly) - No token provided');
-    return res.status(401).json({ msg: 'No token provided. Access denied.' });
+    return res.status(401).json({ success: false, message: 'No token provided' });
   }
 
   if (!process.env.JWT_SECRET) {
-    console.error('JWT_SECRET is missing in environment config');
-    return res.status(500).json({ msg: 'Server configuration error' });
+    console.error('JWT_SECRET missing');
+    return res.status(500).json({ success: false, message: 'Server configuration error' });
   }
 
   try {
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Auth (tokenOnly) - Token verified for user:', verified.id);
-    req.user = verified.id;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.id;   // only id, no DB query
     next();
   } catch (err) {
-    console.log('Auth (tokenOnly) - Token verification failed:', err.message);
-    return res.status(401).json({
-      msg:
-        err.name === 'TokenExpiredError'
-          ? 'Token has expired. Please log in again.'
-          : err.name === 'JsonWebTokenError'
-            ? 'Invalid token format.'
-            : 'Token verification failed.'
-    });
+    let message = 'Invalid or expired token';
+    if (err.name === 'TokenExpiredError') message = 'Token expired. Please log in again.';
+    if (err.name === 'JsonWebTokenError') message = 'Invalid token format.';
+    return res.status(401).json({ success: false, message });
   }
+};
+
+// Optional auth: if token provided, attach userId; otherwise continue as guest
+exports.optionalAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.split(' ')[1]?.trim();
+
+  if (token && process.env.JWT_SECRET) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.userId = decoded.id;
+    } catch (err) {
+      // ignore invalid token for optional auth
+    }
+  }
+  next();
 };

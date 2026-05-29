@@ -28,7 +28,7 @@ function CreatePost() {
       showSuccess('Post published!');
       navigate('/dashboard');
     } catch (err) {
-      const msg = err.response?.data?.msg || 'Failed to create post';
+      const msg = err.response?.data?.message || 'Failed to create post';
       showError(msg);
     } finally {
       setIsSubmitting(false);

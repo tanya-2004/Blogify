@@ -1,16 +1,11 @@
 import { useEffect, useState } from 'react';
 import API from '../utils/axios';
 import { getPostStats } from '../utils/postStats';
-import { showSuccess, showError } from '../utils/toast'; 
+import { showError } from '../utils/toast';
 
 export default function usePostStats() {
   const [posts, setPosts] = useState([]);
-  const [stats, setStats] = useState({
-    totalPosts: 0,
-    totalViews: 0,
-    totalLikes: 0,
-    totalComments: 0
-  });
+  const [stats, setStats] = useState({ totalPosts: 0, totalViews: 0, totalLikes: 0, totalComments: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -18,30 +13,25 @@ export default function usePostStats() {
     setLoading(true);
     try {
       const res = await API.get('/posts/mine');
-      const postData = Array.isArray(res.data) ? res.data : [];
-      const { views, likes, comments } = getPostStats(postData);
-
-      setPosts(postData);
-      setStats({
-        totalPosts: postData.length,
-        totalViews: views,
-        totalLikes: likes,
-        totalComments: comments
-      });
-
-      showSuccess('Post stats refreshed');
+      if (res.data.success) {
+        const postData = res.data.posts || [];
+        const { views, likes, comments } = getPostStats(postData);
+        setPosts(postData);
+        setStats({
+          totalPosts: postData.length,
+          totalViews: views,
+          totalLikes: likes,
+          totalComments: comments
+        });
+      } else {
+        throw new Error(res.data.message || 'Failed to fetch posts');
+      }
     } catch (err) {
-      console.error('Failed to fetch posts:', err);
-      setError('Failed to load post stats');
+      const msg = err.response?.data?.message || err.message;
+      setError(msg);
+      showError(msg);
       setPosts([]);
-      setStats({
-        totalPosts: 0,
-        totalViews: 0,
-        totalLikes: 0,
-        totalComments: 0
-      });
-
-      showError('Error loading post stats');
+      setStats({ totalPosts: 0, totalViews: 0, totalLikes: 0, totalComments: 0 });
     } finally {
       setLoading(false);
     }

@@ -77,14 +77,8 @@ export default function NewPostModal({ open, onClose, onPostCreated }) {
       onPostCreated?.();
       onClose?.();
     } catch (err) {
-      const status = err.response?.status;
-
-      if (status === 401) {
-        showError('Authentication failed. Redirecting...');
-        setTimeout(() => (window.location.href = '/login'), 2000);
-      } else {
-        showError(err.response?.data?.msg || err.response?.data?.error || 'Failed to create post. Please try again.');
-      }
+      const msg = err.response?.data?.message || err.response?.data?.msg || 'Failed to create post. Please try again.';
+      showError(msg);
     } finally {
       setLoading(false);
     }
