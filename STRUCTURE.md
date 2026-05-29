@@ -114,7 +114,6 @@ frontend/
 - **Error handling** in the frontend always looks at `err.response?.data?.message`.  
 - **Authentication** middleware attaches `req.userId` (not the full user object).  
 - The comment system uses `author` as a **string** (the logged‑in user’s username) – this is technical debt that can be migrated later to a proper `ObjectId` reference.  
-- `syncCommentCount.js` in backend utils is **deprecated** and can be deleted.  
 - The `.vscode/tasks.json` provides a one‑click “Start Frontend Development Server” task – useful but not essential.
 
 ## Deployment URLs
