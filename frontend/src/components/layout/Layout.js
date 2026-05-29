@@ -2,11 +2,11 @@ import { useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { isAuthenticated } from '../../utils/auth';
 import { SidebarProvider, useSidebar } from '../../contexts/SidebarContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { NewPostModal } from '../';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
-// Routes that should not show the sidebar/authenticated layout
 const PUBLIC_ROUTES = ['/', '/signin', '/signup'];
 
 function LayoutContent({ children }) {
@@ -14,56 +14,64 @@ function LayoutContent({ children }) {
   const isAuth = isAuthenticated();
   const isPublicRoute = PUBLIC_ROUTES.includes(location.pathname);
   const { isCollapsed } = useSidebar();
-  
-  // State for NewPostModal
+  const { fontSize, primaryColor, selectedTheme } = useTheme();
+
+  const fontClass =
+    fontSize === 'small' ? 'text-sm'
+      : fontSize === 'large' ? 'text-lg'
+        : 'text-base';
+
   const [showNewPostModal, setShowNewPostModal] = useState(false);
-  
+
   const handleNewPost = () => {
     setShowNewPostModal(true);
   };
-  
+
   const handlePostCreated = () => {
     setShowNewPostModal(false);
-    // Optionally refresh the page or trigger a refresh of posts
     window.location.reload();
   };
-  
-  // For public routes (home, signin, signup), don't show sidebar
+
+  const themeClasses = `${selectedTheme.bg} ${selectedTheme.text}`;
+
   if (isPublicRoute) {
-    return children;
+    return (
+      <div className={`${themeClasses} ${fontClass} min-h-screen`}>
+        {children}
+      </div>
+    );
   }
-  
-  // For protected routes, show full layout with sidebar
+
   if (isAuth) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className={`${themeClasses} ${fontClass} min-h-screen`}>
         <Header />
         <div className="flex h-screen">
           <Sidebar onNewPost={handleNewPost} />
-          <main 
-            className={`flex-1 pt-16 transition-all duration-300 overflow-y-auto h-screen ${
-              isCollapsed ? 'md:ml-16' : 'md:ml-64'
-            }`}
+          <main
+            className={`flex-1 pt-16 transition-all duration-300 overflow-y-auto h-screen ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}`}
           >
             <div className="p-4 pb-8">
               {children}
             </div>
           </main>
         </div>
-        
-        {/* NewPostModal */}
+
         <NewPostModal
           open={showNewPostModal}
           onClose={() => setShowNewPostModal(false)}
           onPostCreated={handlePostCreated}
+          accentColor={primaryColor}
         />
       </div>
     );
   }
-  
-  // If trying to access protected route without auth, this shouldn't happen
-  // because ProtectedRoute should redirect, but just in case
-  return children;
+
+  return (
+    <div className={`${themeClasses} ${fontClass} min-h-screen`}>
+      {children}
+    </div>
+  );
 }
 
 function Layout({ children }) {

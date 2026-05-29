@@ -1,128 +1,197 @@
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
-const syncCommentCount = require('../utils/syncCommentCount');
+const mongoose = require('mongoose');
 
-// GET /api/comments
-const getAllComments = async (req, res) => {
+// Helper: update commentsCount on post
+const updatePostCommentCount = async (postId) => {
+  const count = await Comment.countDocuments({ post: postId, status: 'approved' });
+  await Post.findByIdAndUpdate(postId, { commentsCount: count });
+};
+
+// GET /api/comments?postId=...&page=1&limit=10
+exports.getAllComments = async (req, res) => {
   try {
-    const comments = await Comment.find()
-      .sort({ date: -1 })
+    const { postId, page = 1, limit = 20, status = 'approved' } = req.query;
+    const filter = { status };
+    if (postId && mongoose.Types.ObjectId.isValid(postId)) filter.post = postId;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const comments = await Comment.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
       .populate('post', 'title')
-      .populate('author', 'username');
-    res.status(200).json(comments);
+      .lean();
+
+    const total = await Comment.countDocuments(filter);
+
+    res.status(200).json({
+      success: true,
+      data: comments,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total }
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch comments' });
+    console.error('Get comments error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch comments' });
   }
 };
 
-// POST /api/comments
-const createComment = async (req, res) => {
+// POST /api/comments – authenticated user
+exports.createComment = async (req, res) => {
   try {
-    const author = req.body.author?.trim();
-    const content = req.body.content?.trim();
-    const post = req.body.post?.trim();
-    const { status, likes, replies } = req.body;
+    const { content, postId } = req.body;
+    const userId = req.userId; // from auth middleware
 
-    if (!author || !content || !post) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    // Fetch user to get username (if author is string for now)
+    const User = require('../models/User');
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
     }
 
     const newComment = new Comment({
-      author,
+      author: user.username,   // still string, but taken from logged-in user
       content,
-      post,
-      status: status || 'pending',
-      likes: likes || 0,
-      replies: Array.isArray(replies)
-        ? replies.map(r => ({
-          author: r.author?.trim() || '',
-          content: r.content?.trim() || ''
-        }))
-        : []
+      post: postId,
+      status: post.moderateComments ? 'pending' : 'approved',
+      likes: 0,
+      replies: []
     });
 
     const savedComment = await newComment.save();
 
-    // 🔄 Update commentsCount in Post
-    await Post.findByIdAndUpdate(post, { $inc: { commentsCount: 1 } });
+    // Increment commentsCount only for approved comments
+    if (savedComment.status === 'approved') {
+      await updatePostCommentCount(postId);
+    }
 
-    res.status(201).json(savedComment);
+    res.status(201).json({ success: true, data: savedComment });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to save comment' });
+    console.error('Create comment error:', err);
+    res.status(500).json({ success: false, message: 'Failed to save comment' });
   }
 };
 
 // DELETE /api/comments/:id
-const deleteComment = async (req, res) => {
+exports.deleteComment = async (req, res) => {
   try {
-    const comment = await Comment.findByIdAndDelete(req.params.id);
-    if (comment) {
-      await syncCommentCount(comment.post);
+    const comment = await Comment.findById(req.params.id);
+    if (!comment) {
+      return res.status(404).json({ success: false, message: 'Comment not found' });
     }
-    res.status(200).json({ message: 'Comment deleted' });
+
+    // Authorization: only comment author or admin can delete
+    const User = require('../models/User');
+    const currentUser = await User.findById(req.userId);
+    const isAuthor = (comment.author === currentUser.username);
+    const isAdmin = currentUser.role === 'admin'; // assuming you add role field later
+
+    if (!isAuthor && !isAdmin) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    await comment.deleteOne();
+    await updatePostCommentCount(comment.post);
+
+    res.status(200).json({ success: true, message: 'Comment deleted' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete comment' });
+    console.error('Delete comment error:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete comment' });
   }
 };
 
-// PATCH /api/comments/:id/approve
-const approveComment = async (req, res) => {
+// POST /api/comments/:id/approve – admin only
+exports.approveComment = async (req, res) => {
   try {
+    const User = require('../models/User');
+    const currentUser = await User.findById(req.userId);
+    if (currentUser.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+
     const comment = await Comment.findByIdAndUpdate(
       req.params.id,
       { status: 'approved' },
       { new: true }
     );
-    await syncCommentCount(comment.post);
-    res.status(200).json(comment);
+    if (!comment) {
+      return res.status(404).json({ success: false, message: 'Comment not found' });
+    }
+
+    await updatePostCommentCount(comment.post);
+    res.status(200).json({ success: true, data: comment });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to approve comment' });
+    console.error('Approve comment error:', err);
+    res.status(500).json({ success: false, message: 'Failed to approve comment' });
   }
 };
 
-// PATCH /api/comments/:id/reject
-const rejectComment = async (req, res) => {
+// POST /api/comments/:id/reject – admin only
+exports.rejectComment = async (req, res) => {
   try {
+    const User = require('../models/User');
+    const currentUser = await User.findById(req.userId);
+    if (currentUser.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+
     const comment = await Comment.findByIdAndUpdate(
       req.params.id,
       { status: 'spam' },
       { new: true }
     );
-    await syncCommentCount(comment.post);
-    res.status(200).json(comment);
+    if (!comment) {
+      return res.status(404).json({ success: false, message: 'Comment not found' });
+    }
+
+    await updatePostCommentCount(comment.post);
+    res.status(200).json({ success: true, data: comment });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to reject comment' });
+    console.error('Reject comment error:', err);
+    res.status(500).json({ success: false, message: 'Failed to reject comment' });
   }
 };
 
-// PATCH /api/comments/:id/like
-const likeComment = async (req, res) => {
+// POST /api/comments/:id/like
+exports.likeComment = async (req, res) => {
   try {
-    const updated = await Comment.findByIdAndUpdate(
+    const comment = await Comment.findByIdAndUpdate(
       req.params.id,
       { $inc: { likes: 1 } },
       { new: true }
     );
-
-    if (!updated) return res.status(404).json({ error: 'Comment not found' });
-
-    res.status(200).json({ likes: updated.likes });
+    if (!comment) {
+      return res.status(404).json({ success: false, message: 'Comment not found' });
+    }
+    res.status(200).json({ success: true, likes: comment.likes });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to like comment' });
+    console.error('Like comment error:', err);
+    res.status(500).json({ success: false, message: 'Failed to like comment' });
   }
 };
 
 // POST /api/comments/:id/reply
-const addReply = async (req, res) => {
+exports.addReply = async (req, res) => {
   try {
-    const author = req.body.author?.trim();
-    const content = req.body.content?.trim();
+    const { content } = req.body;
+    const userId = req.userId;
 
-    if (!author || !content) {
-      return res.status(400).json({ error: 'Author and content are required' });
+    const User = require('../models/User');
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const reply = { author, content };
+    const reply = {
+      author: user.username,
+      content,
+      createdAt: new Date()
+    };
 
     const updatedComment = await Comment.findByIdAndUpdate(
       req.params.id,
@@ -131,21 +200,12 @@ const addReply = async (req, res) => {
     );
 
     if (!updatedComment) {
-      return res.status(404).json({ error: 'Comment not found' });
+      return res.status(404).json({ success: false, message: 'Comment not found' });
     }
 
-    res.status(200).json(updatedComment);
+    res.status(200).json({ success: true, data: updatedComment });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to add reply' });
+    console.error('Add reply error:', err);
+    res.status(500).json({ success: false, message: 'Failed to add reply' });
   }
-};
-
-module.exports = {
-  getAllComments,
-  createComment,
-  approveComment,
-  rejectComment,
-  deleteComment,
-  likeComment,
-  addReply
 };

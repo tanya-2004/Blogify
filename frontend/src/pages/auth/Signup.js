@@ -32,22 +32,33 @@ function Signup() {
     setIsLoading(true);
 
     try {
-      await API.post('/auth/signup', { username, email, password });
+      // 1. Signup
+      const signupRes = await API.post('/auth/signup', { username, email, password });
+      console.log('Signup response:', signupRes.data);
 
-      const res = await API.post('/auth/login', { email, password });
+      if (!signupRes.data.success) {
+        throw new Error(signupRes.data.message || 'Signup failed');
+      }
 
-      if (res.status === 200 && res.data.token) {
-        setToken(res.data.token);
+      // 2. Auto-login after signup
+      const loginRes = await API.post('/auth/login', { email, password });
+      console.log('Login response:', loginRes.data);
+
+      if (loginRes.data.success && loginRes.data.token) {
+        setToken(loginRes.data.token);
         await loadUser();
         showSuccess(`Welcome aboard, ${username}! 🎉`);
         navigate('/dashboard');
       } else {
-        showError('Signup succeeded, but login failed');
+        // If login fails, show error but redirect to signin
+        showError(loginRes.data.message || 'Account created! Please log in manually.');
+        navigate('/signin');
       }
     } catch (err) {
-      const msg =
-        err.response?.data?.msg ||
+      console.error('Full error:', err);
+      const msg = err.response?.data?.message ||
         err.response?.data?.error ||
+        err.message ||
         'Signup failed. Please try again.';
       showError(msg);
     } finally {

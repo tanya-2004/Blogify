@@ -1,6 +1,7 @@
-import React, { forwardRef, useMemo } from 'react';
+import React, { forwardRef, useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import '../../styles/design-system.css';
+import { ThemeContext } from '../../contexts/ThemeContext';
 
 const Input = forwardRef(({
   label,
@@ -17,6 +18,8 @@ const Input = forwardRef(({
   id,
   ...rest
 }, ref) => {
+  const { primaryColor, fontSize, selectedTheme } = useContext(ThemeContext);
+
   const inputId = useMemo(() => id || `input-${Math.random().toString(36).substr(2, 9)}`, [id]);
 
   const inputClasses = [
@@ -29,12 +32,25 @@ const Input = forwardRef(({
     className
   ].filter(Boolean).join(' ');
 
+  const inputGroupClasses = [
+    'input-group',
+    selectedTheme.bg,
+    selectedTheme.text
+  ].filter(Boolean).join(' ');
+
+  const dynamicStyle = {
+    fontSize: `var(--font-size-${fontSize})`,
+    borderColor: error ? 'var(--color-error)' : primaryColor || 'var(--color-primary-default)',
+    outlineColor: primaryColor || 'var(--color-primary-default)'
+  };
+
   return (
-    <div className="input-group" data-testid="input-group">
+    <div className={inputGroupClasses} data-testid="input-group">
       {label && (
         <label
           htmlFor={inputId}
           className={`input-label ${required ? 'input-label--required' : ''}`}
+          style={{ fontSize: `var(--font-size-${fontSize})` }}
         >
           {label}
           {required && <span className="input-label__required" aria-label="required">*</span>}
@@ -42,53 +58,30 @@ const Input = forwardRef(({
       )}
 
       <div className="input-wrapper">
-        {leftIcon && (
-          <div className="input-icon input-icon--left" aria-hidden="true">
-            {leftIcon}
-          </div>
-        )}
+        {leftIcon && <div className="input-icon input-icon--left">{leftIcon}</div>}
 
         <input
           ref={ref}
           id={inputId}
           type={type}
           className={inputClasses}
+          style={dynamicStyle}
           disabled={disabled}
           required={required}
+          aria-required={required}
           aria-invalid={!!error}
           aria-describedby={
-            [
-              error ? `${inputId}-error` : '',
-              hint ? `${inputId}-hint` : ''
-            ].filter(Boolean).join(' ') || undefined
+            [error ? `${inputId}-error` : '', hint ? `${inputId}-hint` : ''].filter(Boolean).join(' ') || undefined
           }
           data-testid="input-field"
           {...rest}
         />
 
-        {rightIcon && (
-          <div className="input-icon input-icon--right" aria-hidden="true">
-            {rightIcon}
-          </div>
-        )}
+        {rightIcon && <div className="input-icon input-icon--right">{rightIcon}</div>}
       </div>
 
-      {hint && (
-        <div id={`${inputId}-hint`} className="input-hint">
-          {hint}
-        </div>
-      )}
-
-      {error && (
-        <div
-          id={`${inputId}-error`}
-          className="input-error"
-          role="alert"
-          aria-live="polite"
-        >
-          {error}
-        </div>
-      )}
+      {hint && <div id={`${inputId}-hint`} className="input-hint">{hint}</div>}
+      {error && <div id={`${inputId}-error`} className="input-error" role="alert">{error}</div>}
     </div>
   );
 });

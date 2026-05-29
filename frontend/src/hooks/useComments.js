@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
-  getComments,
+  getAllComments,
   approveComment,
   rejectComment,
   deleteComment,
   replyToComment
 } from '../services/commentsAPI';
-
 import { showSuccess, showError } from '../utils/toast';
 
 export const useComments = () => {
@@ -15,32 +14,35 @@ export const useComments = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    refreshComments();
-  }, []);
-
   const refreshComments = async () => {
     try {
       setLoading(true);
-      const res = await getComments();
-      setComments(res.data);
-      showSuccess('Comments refreshed'); 
+      const res = await getAllComments(filter);
+      if (res.data.success) {
+        setComments(res.data.data || []);
+      } else {
+        throw new Error(res.data.message);
+      }
     } catch (err) {
       console.error('Failed to fetch comments:', err);
-      setError('Failed to refresh comments');
-      showError('Could not load comments'); 
+      setError(err.response?.data?.message || 'Failed to refresh comments');
+      showError('Could not load comments');
     } finally {
       setLoading(false);
     }
   };
 
+  const refreshAllComments = async () => {
+    await refreshComments();
+    showSuccess('Comments refreshed');
+  };
+
   const handleApprove = async (id) => {
     try {
-      await approveComment(id); // internal toast already fires
+      await approveComment(id);
       await refreshComments();
     } catch (err) {
-      console.error('Failed to approve comment:', err);
-      showError('Approval failed'); // fallback
+      console.error('Approve failed:', err);
     }
   };
 
@@ -49,8 +51,7 @@ export const useComments = () => {
       await rejectComment(id);
       await refreshComments();
     } catch (err) {
-      console.error('Failed to reject comment:', err);
-      showError('Rejection failed');
+      console.error('Reject failed:', err);
     }
   };
 
@@ -59,8 +60,7 @@ export const useComments = () => {
       await deleteComment(id);
       await refreshComments();
     } catch (err) {
-      console.error('Failed to delete comment:', err);
-      showError('Deletion failed');
+      console.error('Delete failed:', err);
     }
   };
 
@@ -69,21 +69,24 @@ export const useComments = () => {
       await replyToComment(id, content);
       await refreshComments();
     } catch (err) {
-      console.error('Failed to reply to comment:', err);
-      showError('Reply failed');
+      console.error('Reply failed:', err);
     }
   };
 
-  const filtered = comments.filter(
-    (c) => filter === 'all' || c.status === filter
-  );
-
+  // Compute stats from the comments array
   const stats = {
     total: comments.length,
-    approved: comments.filter((c) => c.status === 'approved').length,
-    pending: comments.filter((c) => c.status === 'pending').length,
-    spam: comments.filter((c) => c.status === 'spam').length
+    approved: comments.filter(c => c.status === 'approved').length,
+    pending: comments.filter(c => c.status === 'pending').length,
+    spam: comments.filter(c => c.status === 'spam').length
   };
+
+  // Filtered comments (client-side filter)
+  const filtered = filter === 'all' ? comments : comments.filter(c => c.status === filter);
+
+  useEffect(() => {
+    refreshComments();
+  }, [filter]);
 
   return {
     comments: filtered,
@@ -96,6 +99,7 @@ export const useComments = () => {
     handleReject,
     handleDelete,
     handleReply,
-    refreshComments
+    refreshComments,
+    refreshAllComments
   };
 };

@@ -1,13 +1,8 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import '../../styles/design-system.css';
+import { ThemeContext } from '../../contexts/ThemeContext';
 
-/**
- * Card Component
- * 
- * A flexible card component with support for various visual styles
- * including glassmorphism and neumorphism effects
- */
 const Card = ({
   children,
   variant = 'default',
@@ -17,60 +12,65 @@ const Card = ({
   as: Component = 'div',
   ...rest
 }) => {
+  const { fontSize, primaryColor, selectedTheme } = useContext(ThemeContext);
+
   const baseClass = 'card';
   const variantClass = variant !== 'default' ? `card--${variant}` : '';
   const paddingClass = padding !== 'normal' ? `card--${padding}` : '';
   const hoverClass = hover ? 'card--hover' : '';
-  
+  const themeTextClass = selectedTheme.text;
+  const themeBgClass = selectedTheme.bg;
+
   const cardClasses = [
     baseClass,
     variantClass,
     paddingClass,
     hoverClass,
+    themeTextClass,
+    themeBgClass,
     className
   ].filter(Boolean).join(' ');
 
+  const dynamicStyle = {
+    fontSize: `var(--font-size-${fontSize})`,
+    borderColor: variant === 'glass' ? primaryColor : undefined
+  };
+
   return (
-    <Component className={cardClasses} {...rest}>
+    <Component className={cardClasses} style={dynamicStyle} {...rest}>
       {children}
     </Component>
   );
 };
 
-/**
- * Card Header Component
- */
 const CardHeader = ({ children, className = '', ...rest }) => {
-  const headerClasses = ['card__header', className].filter(Boolean).join(' ');
-  
+  const { fontSize, selectedTheme } = useContext(ThemeContext);
+  const headerClasses = ['card__header', selectedTheme.text, className].filter(Boolean).join(' ');
+
   return (
-    <div className={headerClasses} {...rest}>
+    <div className={headerClasses} style={{ fontSize: `var(--font-size-${fontSize})` }} {...rest}>
       {children}
     </div>
   );
 };
 
-/**
- * Card Body Component
- */
 const CardBody = ({ children, className = '', ...rest }) => {
-  const bodyClasses = ['card__body', className].filter(Boolean).join(' ');
-  
+  const { fontSize, selectedTheme } = useContext(ThemeContext);
+  const bodyClasses = ['card__body', selectedTheme.text, className].filter(Boolean).join(' ');
+
   return (
-    <div className={bodyClasses} {...rest}>
+    <div className={bodyClasses} style={{ fontSize: `var(--font-size-${fontSize})` }} {...rest}>
       {children}
     </div>
   );
 };
 
-/**
- * Card Footer Component
- */
 const CardFooter = ({ children, className = '', ...rest }) => {
-  const footerClasses = ['card__footer', className].filter(Boolean).join(' ');
-  
+  const { fontSize, selectedTheme } = useContext(ThemeContext);
+  const footerClasses = ['card__footer', selectedTheme.text, className].filter(Boolean).join(' ');
+
   return (
-    <div className={footerClasses} {...rest}>
+    <div className={footerClasses} style={{ fontSize: `var(--font-size-${fontSize})` }} {...rest}>
       {children}
     </div>
   );
@@ -100,7 +100,6 @@ CardFooter.propTypes = {
   className: PropTypes.string
 };
 
-// Compound component pattern
 Card.Header = CardHeader;
 Card.Body = CardBody;
 Card.Footer = CardFooter;

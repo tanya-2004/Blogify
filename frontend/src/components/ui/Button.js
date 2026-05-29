@@ -1,6 +1,6 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import '../../styles/design-system.css';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const Button = ({
   children,
@@ -16,11 +16,14 @@ const Button = ({
   onClick,
   ...rest
 }) => {
+  const { primaryColor, selectedTheme } = useTheme();
+
   const buttonClasses = [
     'button',
     `button--${variant}`,
     size !== 'medium' ? `button--${size}` : '',
     loading ? 'button--loading' : '',
+    selectedTheme.text,
     className
   ].filter(Boolean).join(' ');
 
@@ -55,6 +58,10 @@ const Button = ({
     className: buttonClasses,
     onClick: handleClick,
     'aria-disabled': disabled || loading,
+    style:
+      variant === 'primary'
+        ? { backgroundColor: primaryColor, color: '#fff' }
+        : { backgroundColor: selectedTheme.bg },
     ...rest
   };
 
@@ -75,20 +82,6 @@ const Button = ({
       {content}
     </Component>
   );
-};
-
-Button.propTypes = {
-  children: PropTypes.node.isRequired,
-  variant: PropTypes.oneOf(['primary', 'secondary', 'outline', 'ghost', 'danger']),
-  size: PropTypes.oneOf(['small', 'medium', 'large']),
-  type: PropTypes.oneOf(['button', 'submit', 'reset']),
-  disabled: PropTypes.bool,
-  loading: PropTypes.bool,
-  leftIcon: PropTypes.node,
-  rightIcon: PropTypes.node,
-  className: PropTypes.string,
-  as: PropTypes.elementType,
-  onClick: PropTypes.func
 };
 
 export default Button;

@@ -33,6 +33,15 @@ const parseTokenPayload = (token) => {
   }
 };
 
+// 🧠 Cached payload for reuse
+let cachedPayload = null;
+const getPayload = () => {
+  if (cachedPayload) return cachedPayload;
+  const token = getToken();
+  cachedPayload = parseTokenPayload(token);
+  return cachedPayload;
+};
+
 // ✅ Auth Check
 let hasShownExpiredToast = false;
 
@@ -43,7 +52,7 @@ export const isAuthenticated = () => {
     return false;
   }
 
-  const payload = parseTokenPayload(token);
+  const payload = getPayload();
   if (!payload) {
     showError('Invalid token. Please sign in again.');
     removeToken();
@@ -67,20 +76,10 @@ export const isAuthenticated = () => {
 };
 
 // 👤 Get user from token
-export const getUserFromToken = () => {
-  const token = getToken();
-  if (!token) return null;
-
-  const payload = parseTokenPayload(token);
-  return payload || null;
-};
+export const getUserFromToken = () => getPayload() || null;
 
 // 🎨 Optional: Theme preference from token
-export const getThemeFromToken = () => {
-  const token = getToken();
-  const payload = parseTokenPayload(token);
-  return payload?.theme || 'default';
-};
+export const getThemeFromToken = () => getPayload()?.theme || 'default';
 
 // 🛠 Dev helper
 export const debugAuthStatus = () => {

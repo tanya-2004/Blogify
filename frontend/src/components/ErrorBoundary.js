@@ -11,7 +11,7 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Caught by ErrorBoundary:', error, errorInfo);
+    console.error(`Caught by ErrorBoundary (${this.props.label || 'Unknown'}):`, error, errorInfo);
     this.setState({ errorInfo });
   }
 
@@ -19,7 +19,7 @@ class ErrorBoundary extends Component {
     if (this.state.hasError) {
       return (
         <div style={{ padding: '40px', textAlign: 'center' }}>
-          <h2>Something went wrong in EditPostModal.</h2>
+          <h2>Something went wrong in {this.props.label || 'this component'}.</h2>
           <p>{this.state.errorInfo?.componentStack}</p>
         </div>
       );

@@ -99,15 +99,24 @@ const navItems = [
 
 export default function Sidebar({ onNewPost }) {
   const { isCollapsed, isMobileOpen, closeMobileSidebar } = useSidebar();
-  const { primaryColor } = useContext(ThemeContext);
+  const { primaryColor, fontSize, selectedTheme } = useContext(ThemeContext);
 
-  // Debug logging
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[SIDEBAR]', { isCollapsed, isMobileOpen });
-  }
+  const fontClass =
+    fontSize === 'small' ? 'text-sm'
+      : fontSize === 'large' ? 'text-lg'
+        : 'text-base';
+
+  const getActiveStyle = (isActive) =>
+    isActive
+      ? {
+        color: primaryColor,
+        backgroundColor: `${primaryColor}22`,
+        fontWeight: 500
+      }
+      : {};
+
   return (
     <>
-      {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
@@ -115,15 +124,13 @@ export default function Sidebar({ onNewPost }) {
         />
       )}
 
-      {/* Sidebar */}
       <aside
-        className={`fixed z-40 top-16 left-0 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 flex flex-col shadow-lg transition-all duration-300 ease-in-out overflow-hidden
+        className={`fixed z-40 top-16 left-0 h-[calc(100vh-4rem)] ${selectedTheme.bg} ${selectedTheme.text} border-r border-gray-200 flex flex-col shadow-lg transition-all duration-300 ease-in-out overflow-hidden
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} 
           md:translate-x-0 
-          ${isCollapsed ? 'md:w-16' : 'md:w-64'}
-        `}
+          ${isCollapsed ? 'md:w-16' : 'md:w-64'} min-h-screen`}
+        role="navigation"
       >
-        {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-end p-4 border-b border-gray-200">
           <button
             onClick={closeMobileSidebar}
@@ -136,22 +143,19 @@ export default function Sidebar({ onNewPost }) {
           </button>
         </div>
 
-        {/* New Post Button */}
         <div className={`p-4 border-b border-gray-200 ${isCollapsed ? 'px-2' : ''}`}>
           <button
-            className={`w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-medium hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-md flex items-center justify-center gap-2 ${isCollapsed ? 'p-3 rounded-xl' : 'py-3 px-4 rounded-lg'
-              }`}
+            className={`w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-medium hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-md flex items-center justify-center gap-2 ${isCollapsed ? 'p-3 rounded-xl' : 'py-3 px-4 rounded-lg'}`}
             onClick={onNewPost}
             title={isCollapsed ? 'New Post' : ''}
           >
             <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            {!isCollapsed && <span className="text-sm whitespace-nowrap">New Post</span>}
+            {!isCollapsed && <span className={`whitespace-nowrap ${fontClass}`}>New Post</span>}
           </button>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-2">
           <ul className="space-y-1 px-2">
             {navItems.map((item) => (
@@ -159,25 +163,19 @@ export default function Sidebar({ onNewPost }) {
                 <NavLink
                   to={item.to}
                   onClick={closeMobileSidebar}
+                  aria-label={item.name}
                   title={isCollapsed ? item.name : ''}
                   className={({ isActive }) =>
-                    `group flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 relative ${isCollapsed ? 'justify-center' : ''
-                    }`
+                    `group flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 relative ${isCollapsed ? 'justify-center' : ''}`
                   }
-                  style={({ isActive }) =>
-                    isActive
-                      ? { color: primaryColor, backgroundColor: `${primaryColor}22`, fontWeight: 500 }
-                      : {}
-                  }
+                  style={({ isActive }) => getActiveStyle(isActive)}
                 >
                   <span className="flex-shrink-0">{item.icon}</span>
                   {!isCollapsed && (
-                    <span className="text-sm font-medium whitespace-nowrap overflow-hidden">
+                    <span className={`whitespace-nowrap overflow-hidden ${fontClass}`}>
                       {item.name}
                     </span>
                   )}
-
-                  {/* Tooltip for collapsed state */}
                   {isCollapsed && (
                     <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                       {item.name}
@@ -189,22 +187,20 @@ export default function Sidebar({ onNewPost }) {
           </ul>
         </nav>
 
-        {/* Bottom Section */}
         <div className={`border-t border-gray-200 p-4 ${isCollapsed ? 'px-2' : ''}`}>
           <a
             href="/"
-            className={`flex items-center gap-3 text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all duration-200 rounded-xl p-2 group ${isCollapsed ? 'justify-center' : ''
-              }`}
+            className={`flex items-center gap-3 hover:opacity-80 transition-all duration-200 rounded-xl p-2 group ${isCollapsed ? 'justify-center' : ''}`}
             title={isCollapsed ? 'View Blog' : ''}
+            aria-label="View Blog"
+            style={{ color: primaryColor }}
           >
             <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
             {!isCollapsed && (
-              <span className="text-sm font-medium whitespace-nowrap">View Blog</span>
+              <span className={`whitespace-nowrap ${fontClass}`}>View Blog</span>
             )}
-
-            {/* Tooltip for collapsed state */}
             {isCollapsed && (
               <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                 View Blog

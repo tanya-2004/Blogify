@@ -1,79 +1,45 @@
-import React, { useState } from 'react';
-import axios from '../utils/axios';
-import { Button, Typography, Input } from './ui';
+import { useState } from 'react';
+import { Button, Input } from './ui';
+import API from '../utils/axios';
 import { showSuccess, showError } from '../utils/toast';
 
-const CommentForm = ({ postId }) => {
-  const [author, setAuthor] = useState('');
+const CommentForm = ({ postId, onCommentAdded }) => {
   const [content, setContent] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess(false);
-
-    if (!author.trim() || !content.trim() || !postId) {
-      showError('All fields are required');
-      setError('All fields are required');
+    if (!content.trim()) {
+      showError('Comment cannot be empty');
       return;
     }
-
+    setSubmitting(true);
     try {
-      await axios.post('/comments', {
-        author: author.trim(),
-        content: content.trim(),
-        post: postId
-      });
-
-      showSuccess('Comment submitted successfully!');
-      setAuthor('');
+      await API.post('/comments', { postId, content: content.trim() });
+      showSuccess('Comment added');
       setContent('');
-      setSuccess(true);
+      if (onCommentAdded) onCommentAdded();
     } catch (err) {
-      console.error('Comment submission failed:', err);
-      showError('Failed to submit comment');
-      setError('Failed to submit comment');
+      showError(err.response?.data?.message || 'Failed to post comment');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md">
-      <Typography variant="h3" className="mb-4">Leave a Comment</Typography>
-
-      {/* Inline fallback for accessibility or screen readers */}
-      {success && (
-        <p className="text-green-600 mb-4" role="alert">
-          Comment submitted successfully!
-        </p>
-      )}
-      {error && (
-        <p className="text-red-500 mb-4" role="alert">
-          {error}
-        </p>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Your name"
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          required
-        />
-        <Input
-          as="textarea"
-          label="Your comment"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          required
-          rows={4}
-        />
-        <Button type="submit" variant="primary">
-          Submit
-        </Button>
-      </form>
-    </div>
+    <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+      <Input
+        as="textarea"
+        placeholder="Write your comment..."
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        rows={3}
+        required
+      />
+      <Button type="submit" variant="primary" disabled={submitting}>
+        {submitting ? 'Posting...' : 'Post Comment'}
+      </Button>
+    </form>
   );
 };
 

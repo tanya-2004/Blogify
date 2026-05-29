@@ -13,7 +13,7 @@ function Login() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { loadUser } = useUser(); 
+  const { loadUser } = useUser();
   const from = location.state?.from?.pathname || '/dashboard';
 
   const handleLogin = async (e) => {
@@ -30,7 +30,7 @@ function Login() {
 
       if (status === 200 && data?.token) {
         setToken(data.token);
-        await loadUser(); 
+        await loadUser();
         showSuccess('Signed in successfully!');
         navigate(from, { replace: true });
       } else {
@@ -39,7 +39,7 @@ function Login() {
     } catch (err) {
       const fallbackMsg = 'Login failed. Please check your credentials.';
       const msg =
-        err.response?.data?.msg ||
+        err.response?.data?.message ||
         err.response?.data?.error ||
         fallbackMsg;
 
