@@ -37,20 +37,21 @@ REACT_APP_API_URL=http://localhost:5000/api
 ```
 
 Run locally:
-Backend: cd backend && npm run dev
-Frontend: cd frontend && npm start
+
+- Backend: cd backend && npm run dev
+- Frontend: cd frontend && npm start
 
 ✅ Features Already Complete (100%)
-Authentication (signup, login, logout, protected routes)
 
-Post CRUD (create, read, update, delete, like)
-Comments (create, approve/reject, delete, like, reply)
-Dashboard with user posts and stats
-Public homepage with post listing
-User settings (profile, privacy, notifications, appearance, publishing)
-Theme customization (light/dark/minimal/warm, accent colour, font size)
-Admin comment moderation page (/comments)
-Analytics page (/stats)
+- Authentication (signup, login, logout, protected routes)
+- Post CRUD (create, read, update, delete, like)
+- Comments (create, approve/reject, delete, like, reply)
+- Dashboard with user posts and stats
+- Public homepage with post listing
+- User settings (profile, privacy, notifications, appearance, publishing)
+- Theme customization (light/dark/minimal/warm, accent colour, font size)
+- Admin comment moderation page (/comments)
+- Analytics page (/stats)
 
 🟡 What Needs Minor Work (Next Sprint)
 
@@ -64,19 +65,20 @@ Analytics page (/stats)
 | Public user profile | View user’s profile at /user/:username | |
 
 ❌ Missing Features (Future Sprints)
-Admin panel (manage users, site settings)
-Draft posts
-User roles (admin, editor, author)
-Social sharing buttons
-SEO (meta tags, sitemap)
-RSS feed
-Spam detection for comments
 
-🧠 Git Workflow 
-Branching Strategy – GitHub Flow
-main – always deployable. Never commit directly.
-feature/xxx – for new features or bug fixes.
-hotfix/xxx – for urgent production fixes.
+- Admin panel (manage users, site settings)
+- Draft posts
+- User roles (admin, editor, author)
+- Social sharing buttons
+- SEO (meta tags, sitemap)
+- RSS feed
+- Spam detection for comments
+
+🧠 Git Workflow (Branching Strategy)
+
+- main – always deployable. Never commit directly.
+- feature/xxx – for new features or bug fixes.
+- hotfix/xxx – for urgent production fixes.
 
 Daily Routine
 ```bash
@@ -125,9 +127,9 @@ Create .github/pull_request_template.md with:
 ```
 
 Code Review Rules
-Every PR needs at least one review from another teammate.
-No direct commits to main.
-Use GitHub Issues to assign tasks.
+- Every PR needs at least one review from another teammate.
+- No direct commits to main.
+- Use GitHub Issues to assign tasks.
 
 Useful Git Commands
 
@@ -144,11 +146,13 @@ Useful Git Commands
 | Discard local changes | `git checkout -- .` |
 
 🧪 Testing Before Commit
-Backend: cd backend && npm run dev – check for startup errors.
-Frontend: cd frontend && npm start – check for compilation errors.
-Always test the feature you changed (login, create post, comment, etc.).
+
+- Backend: cd backend && npm run dev – check for startup errors.
+- Frontend: cd frontend && npm start – check for compilation errors.
+- Always test the feature you changed (login, create post, comment, etc.).
 
 📞 Getting Help
-Read README.md and STRUCTURE.md first.
-Check existing code for patterns (e.g., how API calls are made in PostDetail.js).
-Ask the team lead or search the chat history.
+
+- Read README.md and STRUCTURE.md first.
+- Check existing code for patterns (e.g., how API calls are made in PostDetail.js).
+- Ask the team lead or search the chat history.
