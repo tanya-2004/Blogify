@@ -1,4 +1,4 @@
-# Team Guide – Blogify (For 2nd Year Developers)
+# Team Guide – Blogify
 
 Welcome to the Blogify project! This guide explains how to work together effectively using Git, what’s already built, and what needs to be done next.
 
