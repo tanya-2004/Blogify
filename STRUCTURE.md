@@ -93,6 +93,9 @@ frontend/
 │ │ └── PublicHome.js # landing page, fetches all posts (GET /posts)
 │ ├── services/
 │ │ └── commentsAPI.js # functions for getAllComments, approve, reject, delete, like, reply
+| ├── styles/
+│ | ├── design-system.css   # global design tokens, component styles, animations
+│ | └── theme.js            # JavaScript theme object (colors, spacing, typography, etc.) 
 │ ├── utils/
 │ │ ├── auth.js # setToken, getToken, removeToken, isAuthenticated, getUserFromToken
 │ │ ├── axios.js # interceptors: attach token, handle 401

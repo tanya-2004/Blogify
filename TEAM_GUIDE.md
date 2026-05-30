@@ -93,8 +93,8 @@ git commit -m "describe your change"
 git push origin feature/your-task-name
 
 # 5. Open a Pull Request (PR) on GitHub
-#    - Request at least one teammate to review
-#    - After approval, merge (do not merge your own PR)
+- Request at least one teammate to review
+- After approval, merge (do not merge your own PR)
 ```
 
 Keeping Your Branch Updated
