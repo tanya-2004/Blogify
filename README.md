@@ -37,7 +37,9 @@ A production‑ready MERN blog platform with authentication, posts, comments, li
 ### Environment Variables
 
 **Backend** (`.env` in `backend/`)
+
 **Frontend** (`.env.production` in `frontend/`)
+
 **Frontend** (`.env.development` in `frontend/`)
 
 ### Install & Run
