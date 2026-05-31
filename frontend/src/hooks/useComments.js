@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   getAllComments,
   approveComment,
@@ -14,7 +14,7 @@ export const useComments = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const refreshComments = async () => {
+  const refreshComments = useCallback(async () => {
     try {
       setLoading(true);
       const res = await getAllComments(filter);
@@ -30,50 +30,49 @@ export const useComments = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]); // depends on filter
 
-  const refreshAllComments = async () => {
+  const refreshAllComments = useCallback(async () => {
     await refreshComments();
     showSuccess('Comments refreshed');
-  };
+  }, [refreshComments]);
 
-  const handleApprove = async (id) => {
+  const handleApprove = useCallback(async (id) => {
     try {
       await approveComment(id);
       await refreshComments();
     } catch (err) {
       console.error('Approve failed:', err);
     }
-  };
+  }, [refreshComments]);
 
-  const handleReject = async (id) => {
+  const handleReject = useCallback(async (id) => {
     try {
       await rejectComment(id);
       await refreshComments();
     } catch (err) {
       console.error('Reject failed:', err);
     }
-  };
+  }, [refreshComments]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     try {
       await deleteComment(id);
       await refreshComments();
     } catch (err) {
       console.error('Delete failed:', err);
     }
-  };
+  }, [refreshComments]);
 
-  const handleReply = async (id, content) => {
+  const handleReply = useCallback(async (id, content) => {
     try {
       await replyToComment(id, content);
       await refreshComments();
     } catch (err) {
       console.error('Reply failed:', err);
     }
-  };
+  }, [refreshComments]);
 
-  // Compute stats from the comments array
   const stats = {
     total: comments.length,
     approved: comments.filter(c => c.status === 'approved').length,
@@ -81,12 +80,11 @@ export const useComments = () => {
     spam: comments.filter(c => c.status === 'spam').length
   };
 
-  // Filtered comments (client-side filter)
   const filtered = filter === 'all' ? comments : comments.filter(c => c.status === filter);
 
   useEffect(() => {
     refreshComments();
-  }, [filter]);
+  }, [refreshComments]);
 
   return {
     comments: filtered,

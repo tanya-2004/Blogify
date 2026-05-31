@@ -43,10 +43,10 @@ router.get('/test-auth', auth, (req, res) => {
 
 // Public routes
 router.get('/', getAllPosts);
+router.get('/mine', auth, getMyPosts);
 router.get('/:id', getPostById);
 
 // Protected routes (must be after public but /mine before /:id)
-router.get('/mine', auth, getMyPosts);
 router.post('/', auth, postValidation, validate, createPost);
 router.put('/:id', auth, updateValidation, validate, updatePost);
 router.delete('/:id', auth, deletePost);
